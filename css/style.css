@@ -1,0 +1,112 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background: #f2f2f2;
+}
+
+header {
+    background: #0077cc;
+    color: white;
+    padding: 15px;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.tabs {
+    display: flex;
+    background: #dedede;
+    border-bottom: 2px solid #bbb;
+}
+
+.tab {
+    flex: 1;
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+    font-weight: bold;
+    border-right: 1px solid #ccc;
+}
+
+.tab.active {
+    background: white;
+    border-bottom: 3px solid #0077cc;
+}
+
+.page {
+    display: none;
+    padding: 20px;
+}
+
+.page.active {
+    display: block;
+}
+
+.card {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+input, select, button {
+    padding: 10px;
+    width: 100%;
+    margin: 5px 0;
+    font-size: 16px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+button {
+    background: #0077cc;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button:hover {
+    background: #005fa3;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+th, td {
+    padding: 8px;
+    border-bottom: 1px solid #ccc;
+}
+
+.deleted {
+    text-decoration: line-through;
+    color: #777;
+    background: #eee;
+}
+
+.smallBtn {
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 4px;
+}
+
+.editBtn {
+    background: orange;
+    color: white;
+}
+
+.delBtn {
+    background: #444;
+    color: white;
+}
+
+.sectionTitle {
+    font-size: 18px;
+    margin-top: 15px;
+    font-weight: bold;
+    color: #444;
+}
