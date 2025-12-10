@@ -18,7 +18,7 @@ export function renderImportExportPage() {
     `;
 
     // EVENT LISTENERS
-    document.getElementById("btnExportJson").onclick = exportJSON;
+    document.getElementById("btnExportJson").onclick = () => exportJSON();
     
 
     document.getElementById("btnImportJson").onclick = () => {

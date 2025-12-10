@@ -22,7 +22,7 @@ export function resetFileHandle() {
 // =====================
 // EXPORT JSON (SAVE AS)
 // =====================
-export async function exportJSON(jsonData) {
+export async function exportJSON(jsonData = data) {
     try {
         // Fallback za Firefox/Safari
         if (!window.showSaveFilePicker) {
