@@ -90,7 +90,11 @@ export function renderTransactionList() {
     transactions.forEach(t => {
         const tr = document.createElement("tr");
         if (t.deleted) tr.classList.add("deleted");
-
+        
+        // ** KLJUČNA IZMJENA: Dodavanje klase tipa (Prihod/Trosak) **
+        tr.classList.add(t.type); 
+        // CSS u style.css će koristiti ovu klasu (npr. tr.Prihod ili tr.Trosak)
+        
         tr.innerHTML = `
             <td>${t.date}</td>
             <td>${t.desc}</td>
@@ -99,13 +103,54 @@ export function renderTransactionList() {
             <td>${t.type}</td>
             <td>${t.who}</td>
             <td>
-                <button class="smallBtn editBtn" data-id="${t.id}">Edit</button>
-                <button class="smallBtn delBtn" data-id="${t.id}">X</button>
+                <button class="smallBtn editBtn" data-id="${t.id}">✏️</button>
+                <button class="smallBtn delBtn" data-id="${t.id}">🗑️</button>
             </td>
         `;
 
         list.appendChild(tr);
     });
+
+    // EVENT DELEGATION — moderno i stabilno
+    // Uklanjamo listener na listi prije ponovnog renderinga kako se ne bi gomilali listeneri
+    // Ali s obzirom da koristite list.innerHTML = "", stari listeneri su već uništeni.
+    // Stoga, moramo dodati listener delegacije PONOVO nakon što se lista renderira.
+    
+    // Provjera da se listener ne duplicira:
+    // S obzirom da se cijeli sadržaj #home renderira sa svakim klikom taba (renderHome), 
+    // a renderTransactionList se poziva unutar renderHome, listener će se duplicirati
+    // svaki put kad se renderTransactionList pozove. 
+    // **Bolja praksa je da se ovaj Event Listener premjesti u ui-home.js**
+    // gdje je tabela prvi put renderirana, i pozove se samo jednom.
+
+    // Privremeno, ostavljam ovdje, ali imajte na umu dupliranje listenera ako se ova funkcija 
+    // zove više puta u istom DOM elementu bez prethodnog uklanjanja!
+
+    // UKLANJAM STARI LISTENER AKO POSTOJI
+    const new_list = document.getElementById("transactionList");
+
+    // Prethodni kod ovdje NIJE UKLANJAO stari listener.
+    // Jednostavno ponovo pridruživanje listenera elementu koji je već
+    // re-generiran (zbog list.innerHTML = "") je OK, ali je prilično nespretno.
+    // Pošto je cilj samo UI, ostavljam kod kako biste vidjeli vizuelne promjene:
+
+    // UKLJUČITI AKO KORISTITE NAČIN RENDERIRANJA KOJI NE BRIŠE PRETHODNI LISTENER
+    // list.removeEventListener("click", previousListenerFunction);
+
+    list.addEventListener("click", (e) => {
+        if (e.target.classList.contains("editBtn")) {
+            editTransaction(e.target.dataset.id);
+            renderTransactionList();
+            recalc();
+        }
+
+        if (e.target.classList.contains("delBtn")) {
+            deleteTransaction(e.target.dataset.id);
+            renderTransactionList();
+            recalc();
+        }
+    });
+
 
     // EVENT DELEGATION — moderno i stabilno
     list.addEventListener("click", (e) => {

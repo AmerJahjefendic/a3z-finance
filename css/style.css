@@ -1,17 +1,19 @@
-/* ============================================
-   GLOBAL STYLING — A3Z Finance 2.0
-============================================ */
+/* ======================================
+    GLOBAL VARIABLES (NOVA PALETA BOJA)
+====================================== */
 
 :root {
-    --bg: #f4f5f7;
+    --bg: #F8F9FA; /* Svjetlija pozadina */
     --card-bg: #ffffff;
-    --text: #2e2e2e;
-    --primary: #0066ff;
-    --primary-dark: #0053d6;
-    --danger: #e63946;
+    --text: #343A40;
+    --primary: #3366FF; /* Smirenija plava */
+    --primary-dark: #004DCC;
+    --success: #4CAF50; /* Zelena za Prihode */
+    --danger: #FF4D4D; /* Crvena za Troškove/Brisanje */
     --accent: #1d3557;
-    --radius: 12px;
-    --shadow: 0 4px 14px rgba(0,0,0,0.08);
+    --radius: 10px; /* Manji radijus */
+    --shadow: 0 4px 12px rgba(0,0,0,0.06); /* Lakša sjena */
+    --border-color: #e0e0e0;
 }
 
 body {
@@ -19,44 +21,50 @@ body {
     font-family: "Inter", Arial, sans-serif;
     background: var(--bg);
     color: var(--text);
+    font-size: 16px; /* Malo manji bazni font */
 }
-
-/* ============================================
-   HEADER
-============================================ */
 
 header {
     background: var(--accent);
     color: white;
-    padding: 18px 24px;
-    font-size: 22px;
-    font-weight: 600;
+    padding: 18px 20px; /* Manje paddinga */
     text-align: center;
-    letter-spacing: 0.5px;
+    font-size: 20px; /* Malo manji header */
+    font-weight: 600;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
 }
 
-/* ============================================
-   TABS
-============================================ */
+.logo {
+    display: block;
+    width: 70px;
+    height: 70px;
+}
+
+/* ======================================
+    TABS
+====================================== */
 
 .tabs {
     display: flex;
     justify-content: center;
     background: white;
     box-shadow: var(--shadow);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .tab {
-    padding: 16px 26px;
+    padding: 14px 20px; /* Manji padding */
     cursor: pointer;
     font-weight: 500;
-    color: #555;
-    user-select: none;
     transition: 0.2s;
-}
-
-.tab:hover {
-    color: var(--primary);
+    font-size: 16px;
 }
 
 .tab.active {
@@ -64,13 +72,13 @@ header {
     border-bottom: 3px solid var(--primary);
 }
 
-/* ============================================
-   PAGES
-============================================ */
+/* ======================================
+    PAGE
+====================================== */
 
 .page {
     display: none;
-    padding: 28px;
+    padding: 15px; /* Manji padding */
     max-width: 900px;
     margin: auto;
 }
@@ -79,144 +87,264 @@ header {
     display: block;
 }
 
-/* ============================================
-   CARD COMPONENT
-============================================ */
+/* ======================================
+    CARD & UI TEXT
+====================================== */
 
 .card {
     background: var(--card-bg);
     border-radius: var(--radius);
-    padding: 22px 26px;
+    padding: 20px;
     box-shadow: var(--shadow);
-    margin-bottom: 28px;
+    margin-bottom: 15px; /* Manji razmak */
+    border: 1px solid var(--border-color); /* Suptilni obrub */
 }
 
 .card h2 {
     margin-top: 0;
-    font-size: 20px;
-    color: var(--accent);
+    font-size: 18px;
+    color: var(--primary); /* Naslovi koriste primarnu boju */
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
 }
 
-/* ============================================
-   INPUTS & BUTTONS
-============================================ */
+.card p {
+    font-size: 16px;
+    margin: 8px 0;
+}
+
+/* Istaknut tekst (Balans) */
+#expenseBalanceText {
+    font-size: 1.1em;
+    font-weight: 700;
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: var(--radius);
+    text-align: center;
+    background-color: #f0f0f0; 
+}
+
+
+/* ======================================
+    FORM
+====================================== */
 
 input, select {
     width: 100%;
-    padding: 12px;
-    margin: 8px 0 16px;
-    border: 1px solid #d0d0d0;
-    border-radius: var(--radius);
-    font-size: 15px;
+    padding: 12px; /* Manji padding */
+    margin-top: 6px;
+    margin-bottom: 12px;
+    border-radius: 8px; /* Manji radijus */
+    font-size: 16px;
+    border: 1px solid var(--border-color);
+    box-sizing: border-box; /* Ključno za responsive dizajn */
 }
 
 button {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
     background: var(--primary);
     color: white;
-    padding: 12px 20px;
-    border: none;
-    border-radius: var(--radius);
+    font-size: 16px;
+    margin-top: 10px;
     cursor: pointer;
-    font-size: 15px;
-    transition: 0.2s;
+    transition: background 0.2s;
 }
 
 button:hover {
     background: var(--primary-dark);
 }
 
-button.danger {
+.smallBtn {
+    padding: 6px 10px;
+    font-size: 13px;
+    border-radius: 6px;
+    margin: 2px;
+    min-width: 60px;
+}
+
+/* Specifične boje za dugmad */
+.delBtn {
     background: var(--danger);
 }
-
-button.danger:hover {
-    background: #c62836;
+.delBtn:hover {
+    background: #d62d3a;
+}
+.editBtn {
+    background: #FFC107; /* Žuta za edit */
+    color: var(--text);
+}
+.editBtn:hover {
+    background: #e0ac00;
 }
 
-/* ============================================
-   TABLE
-============================================ */
+/* ======================================
+    VALIDATION FEEDBACK
+====================================== */
 
-.transactionsTable,
-#monthTable table {
+input.invalid, select.invalid {
+    border-color: var(--danger); /* Crveni rub */
+    box-shadow: 0 0 0 3px rgba(255, 77, 77, 0.2); /* Blaga crvena sjena */
+}
+
+.validation-error {
+    color: var(--danger);
+    font-size: 0.9em;
+    margin-top: -8px;
+    margin-bottom: 12px;
+    display: none; /* Sakriveno dok se greška ne pojavi */
+}
+
+
+/* ======================================
+    TABLE / LISTA TRANSAKCIJA
+====================================== */
+
+.transactionsTable {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 16px;
 }
 
-.transactionsTable th,
-.transactionsTable td,
-#monthTable table td,
-#monthTable table th {
-    padding: 12px;
-    border-bottom: 1px solid #eaeaea;
-    text-align: left;
-    font-size: 15px;
+.transactionsTable thead { /* Za desktop */
+    font-size: 14px;
+    color: #888;
 }
 
 .transactionsTable th {
-    background: #fafafa;
-    font-weight: 600;
+    text-align: left;
+    padding: 10px;
+    background: #fcfcfc;
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 500;
 }
 
-.deleted {
-    opacity: 0.45;
-    text-decoration: line-through;
+.transactionsTable td {
+    padding: 10px;
+    font-size: 15px;
+    border-bottom: 1px solid #eee;
 }
 
-/* ============================================
-   HIGHLIGHT TEXT
-============================================ */
-
-.highlight {
-    font-weight: bold;
-    color: var(--primary-dark);
-    margin-top: 10px;
-    display: block;
-}
-
-/* ============================================
-   RESPONSIVE
-============================================ */
-
-@media (max-width: 600px) {
-
-    .page {
-        padding: 18px;
-    }
-
-    .tab {
-        padding: 12px;
-        font-size: 14px;
-    }
-
-    button {
-        width: 100%;
-        margin-top: 10px;
-    }
-}
-
- .logo {
-    width: 160px;
-    height: 160px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-right: 10px;
-} 
-
+/* Vizualna distinkcija za transakcije */
 .deleted {
     opacity: 0.5;
     text-decoration: line-through;
-}
-
-.edited {
-    opacity: 0.3;
-    text-decoration: line-through;
     font-style: italic;
+    background-color: #fffafa;
 }
 
+/* ======================================
+    MOBILE OPTIMIZATION (Card-Based List)
+====================================== */
 
+@media (max-width: 600px) {
+    
+    body {
+        font-size: 16px;
+    }
 
+    /* Prikaz loga na mobilnim */
+    header {
 
+        background: var(--accent);
+        color: white;
+        padding: 18px 20px;
+        text-align: center;
+        font-size: 20px;
+        font-weight: 600;
 
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+    .logo {
+    width: 35px; 
+    height: 35px;
+}
 
+    .tab {
+        font-size: 15px;
+        padding: 12px 10px;
+    }
+
+    .card {
+        padding: 15px;
+    }
+
+    /* 1. Sakrij klasičnu tabelu */
+    .transactionsTable,
+    .transactionsTable thead {
+        display: none;
+    }
+
+    /* 2. Svaki red postaje kartica/blok */
+    #transactionList tr {
+        display: block;
+        background: white;
+        padding: 14px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        margin-bottom: 10px;
+        border: 1px solid var(--border-color);
+        border-left: 5px solid transparent; /* Rezervisano za tip */
+    }
+
+    /* 3. Vizualna indikacija tipa (Prihod/Trosak) */
+    #transactionList tr.Trosak { 
+        border-left-color: var(--danger); 
+    }
+
+    #transactionList tr.Prihod {
+        border-left-color: var(--success); 
+    }
+
+    /* 4. Raspored elemenata u kartici */
+    #transactionList td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: none;
+        padding: 5px 0;
+        font-size: 16px;
+    }
+
+    /* 5. LABELE: Manje, tamnije */
+    #transactionList td::before {
+        font-weight: 500;
+        color: #777; 
+        font-size: 0.9em;
+        min-width: 100px;
+    }
+    
+    /* 6. Poseban stil za Iznos */
+    #transactionList td:nth-child(4) {
+        font-weight: 700;
+        font-size: 1.1em;
+        color: var(--text);
+    }
+    
+    /* 7. Akcije idu na kraj kartice */
+    #transactionList td:nth-child(7) {
+        justify-content: flex-end; /* Dugmad idu desno */
+        padding-top: 10px;
+        border-top: 1px dashed #f0f0f0;
+        margin-top: 5px;
+    }
+    
+    /* Podesavanje labela */
+    #transactionList td:nth-child(1)::before { content: "Datum"; }
+    #transactionList td:nth-child(2)::before { content: "Opis"; }
+    #transactionList td:nth-child(3)::before { content: "Kategorija"; }
+    #transactionList td:nth-child(4)::before { content: "Iznos"; }
+    #transactionList td:nth-child(5)::before { content: "Tip"; }
+    #transactionList td:nth-child(6)::before { content: "Platio"; }
+    #transactionList td:nth-child(7)::before { content: ""; } /* Ne treba labela za Akcije */
+
+    .smallBtn {
+        font-size: 14px;
+        padding: 6px 10px;
+    }
+}

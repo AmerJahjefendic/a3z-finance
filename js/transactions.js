@@ -10,26 +10,75 @@ let editOriginalId = null;
 
 
 // ===================================
-// SAVE TRANSACTION (NEW OR EDIT)
+// SAVE TRANSACTION (NEW OR EDIT) - AŽURIRANO
 // ===================================
 
 export function saveTransaction() {
+    // Dohvaćamo reference na elemente (koristimo globalne varijable iz ui.js)
+    const dateInput = document.getElementById("dateInput");
+    const typeInput = document.getElementById("typeInput");
+    const descInput = document.getElementById("descInput");
+    const amountInput = document.getElementById("amountInput");
+    const catInput = document.getElementById("catInput");
+    const whoInput = document.getElementById("whoInput");
+
+    // Čišćenje prethodnih grešaka
+    [dateInput, typeInput, descInput, amountInput, catInput, whoInput].forEach(el => {
+        el.classList.remove("invalid");
+    });
+    
+    // Dohvaćanje vrijednosti
     const date = dateInput.value;
     const type = typeInput.value;
     const desc = descInput.value.trim();
     const amount = parseFloat(amountInput.value);
 
+    // Varijable za validaciju
+    let isValid = true;
+
+    // A. Provjera da li je datum unesen
+    if (!date) {
+        dateInput.classList.add("invalid");
+        isValid = false;
+    }
+
+    // B. Provjera da li je opis unesen
+    if (!desc) {
+        descInput.classList.add("invalid");
+        isValid = false;
+    }
+
+    // C. Provjera iznosa: mora biti broj i mora biti pozitivan
+    if (isNaN(amount) || amount <= 0) {
+        amountInput.classList.add("invalid");
+        isValid = false;
+    }
+
+    // D. Dodatna provjera za troškove (kategorija i platiša)
+    if (type === "Trosak") {
+        if (!catInput.value) {
+            catInput.classList.add("invalid");
+            isValid = false;
+        }
+        if (!whoInput.value) {
+            whoInput.classList.add("invalid");
+            isValid = false;
+        }
+    }
+    
+    // ZAUSTAVI AKO VALIDACIJA NIJE PROŠLA
+    if (!isValid) {
+        // Možete dodati vizualnu poruku ovdje umjesto alert-a
+        alert("Molimo popunite sva obavezna polja ispravno (Iznos mora biti pozitivan broj).");
+        return; 
+    }
+
+    // --- LOGIKA SPREMANJA (nepromijenjena) ---
+
     const cat = type === "Trosak" ? catInput.value : "-";
     const who = type === "Trosak" ? whoInput.value : "Firma";
 
-    if (!date || !desc || !amount) {
-        alert("Popuni sva polja.");
-        return;
-    }
-
-    // ====================================================
     // CASE 1: EDIT → ARCHIVE OLD + ADD NEW VERSION
-    // ====================================================
     if (editOriginalId !== null) {
         const old = data.transactions.find(x => x.id == editOriginalId);
 
@@ -55,9 +104,7 @@ export function saveTransaction() {
         editOriginalId = null; // reset
     }
 
-    // ====================================================
     // CASE 2: NEW ENTRY
-    // ====================================================
     else {
         data.transactions.push({
             id: Date.now(),
@@ -76,7 +123,6 @@ export function saveTransaction() {
     recalc();
     resetForm();
 }
-
 
 
 // ===================================
