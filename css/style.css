@@ -45,31 +45,47 @@ header {
 }
 
 /* ======================================
-    TABS
+    TABS (PUNA ŠIRINA + BUBBLE STIL)
 ====================================== */
 
 .tabs {
     display: flex;
-    justify-content: center;
-    background: white;
-    box-shadow: var(--shadow);
+    /* justify-content: center; // OVO UKLANJAMO */
+    justify-content: space-around; /* NOVO: Raspoređuje tabove unutar širine */
+    
+    background: var(--bg); 
+    box-shadow: none; 
+    padding: 10px 0; /* NOVO: Uklanjamo horizontalni padding da zauzme punu širinu */
     position: sticky;
     top: 0;
     z-index: 50;
-    border-bottom: 1px solid var(--border-color);
+    
+    /* KLJUČNO: Dodajemo MAX ŠIRINU i centriramo kontejner */
+    max-width: 900px; 
+    margin: auto; 
 }
 
 .tab {
-    padding: 14px 20px; /* Manji padding */
+    padding: 8px 15px; 
     cursor: pointer;
     font-weight: 500;
-    transition: 0.2s;
-    font-size: 16px;
+    transition: all 0.2s ease;
+    font-size: 15px;
+    
+    /* NOVO: Fleksibilnost i bubble stil */
+    flex-grow: 1; /* NOVO: Omogućava tabovima da zauzmu sav raspoloživi prostor */
+    text-align: center;
+    border-radius: 20px; 
+    margin: 0 5px; /* Mali razmak između tabova */
+    color: var(--text); 
+    background: #e9ecef; 
 }
 
 .tab.active {
-    color: var(--primary);
-    border-bottom: 3px solid var(--primary);
+    color: white; 
+    background: var(--primary); 
+    font-weight: 600;
+    border-bottom: none; 
 }
 
 /* ======================================
@@ -346,5 +362,93 @@ input.invalid, select.invalid {
     .smallBtn {
         font-size: 14px;
         padding: 6px 10px;
+    }
+}
+
+/* ======================================
+    NOVI DASHBOARD GRID STILOVI (Kompaktni)
+====================================== */
+
+.dashboard-grid {
+    display: grid;
+    gap: 10px; /* Manji razmak */
+    margin-bottom: 10px;
+}
+.summary-card {
+    padding: 5px; /* Smanjeno sa 15px na 10px */
+    text-align: center;
+    color: white; 
+    box-shadow: var(--shadow); /* Vraćamo laganu sjenu kao u prvoj verziji */
+    border: none;
+    border-radius: var(--radius);
+}
+
+.summary-card p {
+    font-size: 0.9em; /* Malo veći font za labelu nego u drugoj verziji */
+    margin: 0;
+    opacity: 0.9;
+}
+
+.summary-card h3 {
+    color: white; 
+    border-bottom: none;
+    margin: 2px 0 0 0;
+    font-size: 1.5em; /* Smanjeno sa 1.8em na 1.5em */
+    font-weight: 700;
+}
+
+/* Boje pozadine (koriste se globalne varijable) */
+.income-bg { background: var(--success); }
+.expense-bg { background: var(--danger); }
+.profit-bg { background: var(--primary); }
+
+/* --- Stilovi za detalje plaćanja (Amer/Emir) --- */
+
+.compact-details-card {
+    padding: 15px;
+}
+
+.compact-details-card h4 {
+    margin-top: 0;
+    font-size: 1em;
+    color: var(--primary);
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+}
+
+.split-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9em;
+    margin-bottom: 5px;
+}
+
+.total-expense-row {
+    font-size: 0.9em;
+    font-weight: 600;
+    border-top: 1px dashed #f0f0f0;
+    padding-top: 8px;
+    margin-bottom: 0;
+}
+
+/* Istaknuti Balans */
+.balance-highlight {
+    background-color: #FFF3CD; 
+    color: #856404; 
+    border: 1px solid #FFEEBA;
+    padding: 10px;
+    border-radius: var(--radius);
+    text-align: center;
+    font-weight: 600;
+    margin-top: 5px;
+    margin-bottom: 15px; /* Manji razmak */
+}
+
+
+/* --- DESKTOP RASPON --- */
+@media (min-width: 601px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(3, 1fr); 
     }
 }
