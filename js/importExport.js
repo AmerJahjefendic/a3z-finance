@@ -1,4 +1,4 @@
-import { exportJSON, importJSON, exportExcel } from "./storage.js";
+import { exportJSON, importJSON} from "./storage.js";
 
 export function renderImportExportPage() {
     const root = document.getElementById("importExport");
@@ -8,7 +8,6 @@ export function renderImportExportPage() {
             <h2>Import / Export podataka</h2>
 
             <button id="btnExportJson">Export JSON</button>
-            <button id="btnExportExcel">Export Excel</button>
             
             <hr>
 
@@ -20,7 +19,7 @@ export function renderImportExportPage() {
 
     // EVENT LISTENERS
     document.getElementById("btnExportJson").onclick = exportJSON;
-    document.getElementById("btnExportExcel").onclick = exportExcel;
+    
 
     document.getElementById("btnImportJson").onclick = () => {
         const file = document.getElementById("jsonFile").files[0];

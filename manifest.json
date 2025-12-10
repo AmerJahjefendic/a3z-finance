@@ -1,0 +1,20 @@
+{
+  "name": "A3Z Finance",
+  "short_name": "A3ZFin",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#1d3557",
+  "theme_color": "#1d3557",
+  "icons": [
+    {
+      "src": "icons/logo-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icons/logo-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}

@@ -2,15 +2,25 @@
 <html lang="bs">
 <head>
   <meta charset="UTF-8" />
-  <title>A3Z Finance 2.0</title>
+  <title>A3Z Finance 2.1</title>
+
+  <!-- Style -->
   <link rel="stylesheet" href="css/style.css" />
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- PWA iOS Support -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="apple-touch-icon" href="icons/logo-192.png">
+
 </head>
 
 <body>
 
 <header>
   <img src="images/logo.png" alt="A3Z Finance Logo" class="logo">
-  <h1>A3Z Finance 2.0</h1>
+  <h1>A3Z Finance 2.1</h1>
 </header>
 
 <div class="tabs">
@@ -19,13 +29,32 @@
   <div class="tab" data-page="importExport">Import / Export</div>
 </div>
 
-<!-- Stranice -->
+<!-- Dinamički sadržaj -->
 <div id="home" class="page active"></div>
 <div id="months" class="page"></div>
 <div id="importExport" class="page"></div>
 
-<!-- Script (modularno) -->
+<!-- Excel export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<!-- Main JS Module -->
 <script type="module" src="js/main.js"></script>
+
+<!-- GLOBAL event listener za typeInput → ispravlja "Prihod problem" -->
+<script>
+  document.addEventListener("change", (e) => {
+    if (e.target && e.target.id === "typeInput") {
+      if (window.toggleInputs) window.toggleInputs(); // radi i u modulima
+    }
+  });
+</script>
+
+<!-- PWA Service Worker registracija -->
+<script>
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js");
+  }
+</script>
 
 </body>
 </html>

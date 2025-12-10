@@ -1,48 +1,124 @@
+import { saveTransaction, editTransaction, deleteTransaction, getTransactionsForCurrentMonth } from "./transactions.js";
 import { recalc } from "./calc.js";
-import { renderTransactionForm, renderTransactionList } from "./transactions.js";
 
-export function renderHome() {
-    const root = document.getElementById("home");
-    
+
+// ============ TOGGLE INPUTS ============
+export function toggleInputs() {
+    const type = document.getElementById("typeInput").value;
+
+    const catBlock = document.getElementById("catBlock");
+    const whoBlock = document.getElementById("whoBlock");
+
+    if (type === "Prihod") {
+        catBlock.style.display = "none";
+        whoBlock.style.display = "none";
+        document.getElementById("whoInput").value = "Firma";
+    } else {
+        catBlock.style.display = "block";
+        whoBlock.style.display = "block";
+    }
+}
+
+
+// ============ RENDER FORM ============
+export function renderTransactionForm() {
+    const root = document.getElementById("transactionForm");
+
     root.innerHTML = `
         <div class="card">
-            <h2>Troškovi i Uplate</h2>
-            <p>Amer uplatio: <b><span id="amerPaid">0</span> KM</b></p>
-            <p>Emir uplatio: <b><span id="emirPaid">0</span> KM</b></p>
-            <p>Ukupan trošak: <b><span id="totalExpense">0</span> KM</b></p>
-            <p>Trošak po osobi: <b><span id="expensePerPerson">0</span> KM</b></p>
-            <p id="expenseBalanceText" class="highlight"></p>
-        </div>
+            <h2>Dodaj transakciju</h2>
 
-        <div class="card">
-            <h2>Prihodi i Dobit</h2>
-            <p>Prihod: <b><span id="totalIncome">0</span> KM</b></p>
-            <p>Razlika (profit): <b><span id="netProfit">0</span> KM</b></p>
-            <p>Dobit po osobi: <b><span id="profitPerPerson">0</span> KM</b></p>
-        </div>
+            <label>Datum</label>
+            <input type="date" id="dateInput">
 
-        <div id="transactionForm"></div>
+            <label>Tip</label>
+            <select id="typeInput">
+                <option value="Prihod">Prihod</option>
+                <option value="Trosak">Trosak</option>
+            </select>
 
-        <div class="card">
-            <h2>Transakcije tekućeg mjeseca</h2>
-            <table class="transactionsTable">
-                <thead>
-                    <tr>
-                        <th>Datum</th>
-                        <th>Opis</th>
-                        <th>Kategorija</th>
-                        <th>Iznos</th>
-                        <th>Tip</th>
-                        <th>Ko je platio</th>
-                        <th>Akcije</th>
-                    </tr>
-                </thead>
-                <tbody id="transactionList"></tbody>
-            </table>
+            <div id="catBlock">
+                <label>Kategorija</label>
+                <select id="catInput">
+                    <option value="Materijal">Materijal</option>
+                    <option value="Alat">Alat</option>
+                    <option value="Gorivo">Gorivo</option>
+                    <option value="Ostalo">Ostalo</option>
+                </select>
+            </div>
+
+            <div id="whoBlock">
+                <label>Ko je platio</label>
+                <select id="whoInput">
+                    <option value="Amer">Amer</option>
+                    <option value="Emir">Emir</option>
+                    <option value="Firma">Firma</option>
+                </select>
+            </div>
+
+            <label>Opis</label>
+            <input type="text" id="descInput">
+
+            <label>Iznos (KM)</label>
+            <input type="number" id="amountInput">
+
+            <button id="saveBtn">Spremi</button>
         </div>
     `;
 
-    renderTransactionForm();
-    renderTransactionList();
-    recalc();
+    // EVENT LISTENERS
+    document.getElementById("saveBtn").addEventListener("click", () => {
+        saveTransaction();
+        renderTransactionList();
+        recalc();
+    });
+
+    document.getElementById("typeInput").addEventListener("change", toggleInputs);
+
+    toggleInputs();
+}
+
+
+// ============ RENDER TRANSACTIONS LIST ============
+
+export function renderTransactionList() {
+    const list = document.getElementById("transactionList");
+    const transactions = getTransactionsForCurrentMonth();
+
+    list.innerHTML = "";
+
+    transactions.forEach(t => {
+        const tr = document.createElement("tr");
+        if (t.deleted) tr.classList.add("deleted");
+
+        tr.innerHTML = `
+            <td>${t.date}</td>
+            <td>${t.desc}</td>
+            <td>${t.cat}</td>
+            <td>${t.amount.toFixed(2)} KM</td>
+            <td>${t.type}</td>
+            <td>${t.who}</td>
+            <td>
+                <button class="smallBtn editBtn" data-id="${t.id}">Edit</button>
+                <button class="smallBtn delBtn" data-id="${t.id}">X</button>
+            </td>
+        `;
+
+        list.appendChild(tr);
+    });
+
+    // EVENT DELEGATION — moderno i stabilno
+    list.addEventListener("click", (e) => {
+        if (e.target.classList.contains("editBtn")) {
+            editTransaction(e.target.dataset.id);
+            renderTransactionList();
+            recalc();
+        }
+
+        if (e.target.classList.contains("delBtn")) {
+            deleteTransaction(e.target.dataset.id);
+            renderTransactionList();
+            recalc();
+        }
+    });
 }

@@ -1,4 +1,4 @@
-import { renderHome } from "./ui.js";
+import { renderHome } from "./ui-home.js";
 import { renderMonthsPage } from "./months.js";
 import { initStorage } from "./storage.js";
 import { renderImportExportPage } from "./importExport.js";

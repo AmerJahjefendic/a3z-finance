@@ -1,124 +1,147 @@
 import { data } from "./main.js";
-import { recalc } from "./calc.js";
 import { saveToLocal } from "./storage.js";
+import { renderTransactionList } from "./ui.js";
+import { recalc } from "./calc.js";
 
-export function renderTransactionForm() {
-    document.getElementById("transactionForm").innerHTML = `
-        <div class="card">
-            <h2>Dodaj transakciju</h2>
+// ===================================
+// EDIT MODE CONTROL
+// ===================================
+let editOriginalId = null;
 
-            <label>Datum</label>
-            <input id="tDate" type="date">
 
-            <label>Tip</label>
-            <select id="tType" onchange="toggleInputs()">
-                <option value="Prihod">Prihod</option>
-                <option value="Trosak">Trosak</option>
-            </select>
+// ===================================
+// SAVE TRANSACTION (NEW OR EDIT)
+// ===================================
 
-            <label>Opis</label>
-            <input id="tDesc" type="text">
+export function saveTransaction() {
+    const date = dateInput.value;
+    const type = typeInput.value;
+    const desc = descInput.value.trim();
+    const amount = parseFloat(amountInput.value);
 
-            <div id="catWrap">
-                <label>Kategorija</label>
-                <select id="tCat">
-                    <option value="Materijal">Materijal</option>
-                    <option value="Najam">Najam</option>
-                    <option value="Alat">Alat</option>
-                    <option value="Ostalo">Ostalo</option>
-                </select>
-            </div>
+    const cat = type === "Trosak" ? catInput.value : "-";
+    const who = type === "Trosak" ? whoInput.value : "Firma";
 
-            <div id="whoWrap">
-                <label>Ko je platio</label>
-                <select id="tWho">
-                    <option value="Amer">Amer</option>
-                    <option value="Emir">Emir</option>
-                </select>
-            </div>
+    if (!date || !desc || !amount) {
+        alert("Popuni sva polja.");
+        return;
+    }
 
-            <label>Iznos (KM)</label>
-            <input id="tAmount" type="number">
+    // ====================================================
+    // CASE 1: EDIT → ARCHIVE OLD + ADD NEW VERSION
+    // ====================================================
+    if (editOriginalId !== null) {
+        const old = data.transactions.find(x => x.id == editOriginalId);
 
-            <button onclick="saveTransaction()">Spasi</button>
-        </div>
-    `;
-
-    window.toggleInputs = function () {
-        const type = document.getElementById("tType").value;
-        document.getElementById("catWrap").style.display = type === "Trosak" ? "block" : "none";
-        document.getElementById("whoWrap").style.display = type === "Trosak" ? "block" : "none";
-    };
-
-    window.saveTransaction = function () {
-        const date = tDate.value;
-        const type = tType.value;
-        const desc = tDesc.value.trim();
-        const amount = parseFloat(tAmount.value);
-        const cat = tCat.value;
-        const who = tWho.value;
-
-        if (!date || !desc || !amount) {
-            alert("Popuni sva polja.");
-            return;
+        if (old) {
+            // Arhiviraj staru verziju
+            old.deleted = true;
+            old.edited = true;
         }
 
+        // Dodaj potpuno novi zapis
         data.transactions.push({
             id: Date.now(),
             date,
             type,
             desc,
             amount,
-            cat: type === "Trosak" ? cat : "-",
-            who: type === "Trosak" ? who : "Firma",
+            cat,
+            who,
+            deleted: false,
+            editedFrom: editOriginalId
+        });
+
+        editOriginalId = null; // reset
+    }
+
+    // ====================================================
+    // CASE 2: NEW ENTRY
+    // ====================================================
+    else {
+        data.transactions.push({
+            id: Date.now(),
+            date,
+            type,
+            desc,
+            amount,
+            cat,
+            who,
             deleted: false
         });
+    }
 
-        tDate.value = "";
-        tDesc.value = "";
-        tAmount.value = "";
-        tType.value = "Prihod";
-
-        saveToLocal();
-        renderTransactionList();
-        recalc();
-    };
-}
-
-
-export function renderTransactionList() {
-    const tbody = document.getElementById("transactionList");
-    const month = new Date().toISOString().slice(0,7);
-
-    tbody.innerHTML = "";
-
-    data.transactions
-        .filter(t => !t.deleted && t.date.slice(0,7) === month)
-        .forEach(t => {
-            const tr = document.createElement("tr");
-
-            tr.innerHTML = `
-                <td>${t.date}</td>
-                <td>${t.desc}</td>
-                <td>${t.cat}</td>
-                <td>${t.amount} KM</td>
-                <td>${t.type}</td>
-                <td>${t.who}</td>
-                <td>
-                    <button onclick="deleteTransaction(${t.id})">X</button>
-                </td>
-            `;
-
-            tbody.appendChild(tr);
-        });
-}
-
-window.deleteTransaction = function (id) {
-    const t = data.transactions.find(x => x.id === id);
-    if (!t) return;
-
-    t.deleted = true;
     saveToLocal();
     renderTransactionList();
     recalc();
-};
+    resetForm();
+}
+
+
+
+// ===================================
+// DELETE = SOFT DELETE
+// ===================================
+
+export function deleteTransaction(id) {
+    const t = data.transactions.find(x => x.id == id);
+    if (!t) return;
+
+    t.deleted = true;
+
+    saveToLocal();
+    renderTransactionList();
+    recalc();
+}
+
+
+
+// ===================================
+// EDIT = LOAD OLD VALUES INTO FORM
+// ===================================
+
+export function editTransaction(id) {
+    const t = data.transactions.find(x => x.id == id);
+    if (!t) return;
+
+    // Popuni formu
+    dateInput.value = t.date;
+    typeInput.value = t.type;
+    descInput.value = t.desc;
+    amountInput.value = t.amount;
+
+    if (t.type === "Trosak") {
+        catInput.value = t.cat;
+        whoInput.value = t.who;
+    }
+
+    typeInput.dispatchEvent(new Event("change"));
+
+    // Zapamti ID orginala radi verzionisanja
+    editOriginalId = id;
+}
+
+
+
+// ===================================
+// FILTER: CURRENT MONTH (ACTIVE + DELETED)
+// ===================================
+
+export function getTransactionsForCurrentMonth() {
+    const month = new Date().toISOString().slice(0, 7);
+    return data.transactions.filter(t => t.date.slice(0, 7) === month);
+}
+
+
+
+// ===================================
+// RESET FORM
+// ===================================
+
+function resetForm() {
+    dateInput.value = "";
+    descInput.value = "";
+    amountInput.value = "";
+    typeInput.value = "Prihod";
+    typeInput.dispatchEvent(new Event("change"));
+}

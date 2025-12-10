@@ -204,6 +204,18 @@ button.danger:hover {
     margin-right: 10px;
 } 
 
+.deleted {
+    opacity: 0.5;
+    text-decoration: line-through;
+}
+
+.edited {
+    opacity: 0.3;
+    text-decoration: line-through;
+    font-style: italic;
+}
+
+
 
 
 
