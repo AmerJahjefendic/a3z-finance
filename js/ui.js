@@ -42,7 +42,9 @@ export function renderTransactionForm() {
                 <select id="catInput">
                     <option value="Materijal">Materijal</option>
                     <option value="Alat">Alat</option>
-                    <option value="Gorivo">Gorivo</option>
+                    <option value="Prevoz">Prevoz</option>
+                    <option value="Kirija">Kirija</option>
+                    <option value="Režije">Režije</option>
                     <option value="Ostalo">Ostalo</option>
                 </select>
             </div>
