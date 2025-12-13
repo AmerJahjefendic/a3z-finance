@@ -141,27 +141,35 @@ export function deleteTransaction(id) {
 }
 
 
-
 // ===================================
-// EDIT = LOAD OLD VALUES INTO FORM
-// ===================================
+// EDIT TRANSACTION
+//
 
 export function editTransaction(id) {
     const t = data.transactions.find(x => x.id == id);
     if (!t) return;
 
+    // === NOVO: Deklaracija elemenata ===
+    const dateInput = document.getElementById("dateInput");
+    const typeInput = document.getElementById("typeInput");
+    const descInput = document.getElementById("descInput");
+    const amountInput = document.getElementById("amountInput");
+    const catInput = document.getElementById("catInput");
+    const whoInput = document.getElementById("whoInput");
+    // ===================================
+    
     // Popuni formu
-    dateInput.value = t.date;
-    typeInput.value = t.type;
-    descInput.value = t.desc;
-    amountInput.value = t.amount;
+    if (dateInput) dateInput.value = t.date;
+    if (typeInput) typeInput.value = t.type;
+    if (descInput) descInput.value = t.desc;
+    if (amountInput) amountInput.value = t.amount;
 
     if (t.type === "Trosak") {
-        catInput.value = t.cat;
-        whoInput.value = t.who;
+        if (catInput) catInput.value = t.cat;
+        if (whoInput) whoInput.value = t.who;
     }
 
-    typeInput.dispatchEvent(new Event("change"));
+    if (typeInput) typeInput.dispatchEvent(new Event("change"));
 
     // Zapamti ID orginala radi verzionisanja
     editOriginalId = id;
@@ -178,16 +186,34 @@ export function getTransactionsForCurrentMonth() {
     return data.transactions.filter(t => t.date.slice(0, 7) === month);
 }
 
-
-
 // ===================================
 // RESET FORM
 // ===================================
 
 function resetForm() {
-    dateInput.value = "";
-    descInput.value = "";
-    amountInput.value = "";
-    typeInput.value = "Prihod";
-    typeInput.dispatchEvent(new Event("change"));
+    // === NOVO: Deklaracija SVIH 6 elemenata ===
+    const dateInput = document.getElementById("dateInput");
+    const descInput = document.getElementById("descInput");
+    const amountInput = document.getElementById("amountInput");
+    const typeInput = document.getElementById("typeInput");
+    const catInput = document.getElementById("catInput"); 
+    const whoInput = document.getElementById("whoInput"); 
+    // ===========================================
+    
+    // Resetovanje osnovnih polja (Provjera je dodana za svaki slučaj)
+    if (descInput) descInput.value = "";
+    if (amountInput) amountInput.value = "";
+    
+    // Resetovanje padajućih listi
+    if (typeInput) {
+        typeInput.value = "Prihod"; // Default na Prihod
+        typeInput.dispatchEvent(new Event("change"));
+    }
+    
+    // Resetovanje Trošak polja
+    if (catInput) catInput.value = ""; 
+    if (whoInput) whoInput.value = "";
+    
+    // Ostavite datum kako jeste
+    // if (dateInput) dateInput.value = new Date().toISOString().substring(0, 10); 
 }
