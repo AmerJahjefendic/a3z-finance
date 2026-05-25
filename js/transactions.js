@@ -4,6 +4,38 @@ import { saveToLocal } from "./storage.js";
 import { renderTransactionList } from "./ui.js";
 import { recalc } from "./calc.js";
 
+const AUTO_DESC_CATEGORIES = new Set(["Prevoz", "Kirija"]);
+const UTILITIES_CATEGORY = "Režije";
+
+function getSelectedExpenseCategory() {
+    const catInput = document.getElementById("catInput");
+    const utilitySubcategoryInput = document.getElementById("utilitySubcategoryInput");
+
+    if (!catInput) return "";
+    if (catInput.value !== UTILITIES_CATEGORY) return catInput.value;
+    if (!utilitySubcategoryInput?.value) return "";
+    return `${UTILITIES_CATEGORY} - ${utilitySubcategoryInput.value}`;
+}
+
+function isAutoDescriptionCategory(category) {
+    return AUTO_DESC_CATEGORIES.has(category) || String(category).startsWith(`${UTILITIES_CATEGORY} - `);
+}
+
+function parseExpenseCategory(category) {
+    const categoryText = String(category || "");
+    if (categoryText.startsWith(`${UTILITIES_CATEGORY} - `)) {
+        return {
+            main: UTILITIES_CATEGORY,
+            sub: categoryText.slice(`${UTILITIES_CATEGORY} - `.length) || "Struja"
+        };
+    }
+
+    return {
+        main: categoryText,
+        sub: "Struja"
+    };
+}
+
 // ===================================
 // EDIT MODE CONTROL
 // ===================================
@@ -21,18 +53,23 @@ export function saveTransaction() {
     const descInput = document.getElementById("descInput");
     const amountInput = document.getElementById("amountInput");
     const catInput = document.getElementById("catInput");
+    const utilitySubcategoryInput = document.getElementById("utilitySubcategoryInput");
     const isOverheadInput = document.getElementById("isOverheadInput");
 
     // Čišćenje prethodnih grešaka
-    [dateInput, typeInput, descInput, amountInput, catInput].forEach(el => {
+    [dateInput, typeInput, descInput, amountInput, catInput, utilitySubcategoryInput].forEach(el => {
         el.classList.remove("invalid");
     });
     
     // Dohvaćanje vrijednosti
     const date = dateInput.value;
     const type = typeInput.value;
-    const desc = descInput.value.trim();
+    const rawDesc = descInput.value.trim();
     const amount = parseFloat(amountInput.value);
+    const selectedCategory = type === "Trosak" ? getSelectedExpenseCategory() : "-";
+    const desc = type === "Trosak" && isAutoDescriptionCategory(selectedCategory)
+        ? selectedCategory
+        : rawDesc;
 
     // Varijable za validaciju
     let isValid = true;
@@ -61,6 +98,10 @@ export function saveTransaction() {
             catInput.classList.add("invalid");
             isValid = false;
         }
+        if (catInput.value === UTILITIES_CATEGORY && !utilitySubcategoryInput?.value) {
+            utilitySubcategoryInput?.classList.add("invalid");
+            isValid = false;
+        }
     }
     
     // ZAUSTAVI AKO VALIDACIJA NIJE PROŠLA
@@ -72,7 +113,7 @@ export function saveTransaction() {
 
     // --- LOGIKA SPREMANJA (nepromijenjena) ---
 
-    const cat = type === "Trosak" ? catInput.value : "-";
+    const cat = selectedCategory;
     const who = "Firma";
     const projectId = type === "Trosak" && isOverheadInput?.checked
         ? OVERHEAD_PROJECT_ID
@@ -162,6 +203,7 @@ export function editTransaction(id) {
     const descInput = document.getElementById("descInput");
     const amountInput = document.getElementById("amountInput");
     const catInput = document.getElementById("catInput");
+    const utilitySubcategoryInput = document.getElementById("utilitySubcategoryInput");
     const isOverheadInput = document.getElementById("isOverheadInput");
     // ===================================
     
@@ -172,7 +214,9 @@ export function editTransaction(id) {
     if (amountInput) amountInput.value = t.amount;
 
     if (t.type === "Trosak") {
-        if (catInput) catInput.value = t.cat;
+        const parsedCategory = parseExpenseCategory(t.cat);
+        if (catInput) catInput.value = parsedCategory.main;
+        if (utilitySubcategoryInput) utilitySubcategoryInput.value = parsedCategory.sub;
         if (isOverheadInput) isOverheadInput.checked = t.projectId === OVERHEAD_PROJECT_ID;
     } else if (isOverheadInput) {
         isOverheadInput.checked = false;
@@ -205,6 +249,7 @@ function resetForm() {
     const amountInput = document.getElementById("amountInput");
     const typeInput = document.getElementById("typeInput");
     const catInput = document.getElementById("catInput"); 
+    const utilitySubcategoryInput = document.getElementById("utilitySubcategoryInput");
     const isOverheadInput = document.getElementById("isOverheadInput"); 
     // ===========================================
     
@@ -219,7 +264,8 @@ function resetForm() {
     }
     
     // Resetovanje Trošak polja
-    if (catInput) catInput.value = ""; 
+    if (catInput) catInput.value = "Materijal"; 
+    if (utilitySubcategoryInput) utilitySubcategoryInput.value = "Struja";
     if (isOverheadInput) isOverheadInput.checked = false;
     
     // Ostavite datum kako jeste

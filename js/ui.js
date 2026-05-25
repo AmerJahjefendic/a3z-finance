@@ -5,21 +5,80 @@ function toText(value) {
     return value == null ? "" : String(value);
 }
 
+const AUTO_DESC_CATEGORIES = new Set(["Prevoz", "Kirija"]);
+const UTILITIES_CATEGORY = "Režije";
+
+function getSelectedExpenseCategory() {
+    const catInput = document.getElementById("catInput");
+    const utilitySubcategoryInput = document.getElementById("utilitySubcategoryInput");
+
+    if (!catInput) return "";
+    if (catInput.value !== UTILITIES_CATEGORY) return catInput.value;
+    if (!utilitySubcategoryInput?.value) return "";
+    return `${UTILITIES_CATEGORY} - ${utilitySubcategoryInput.value}`;
+}
+
+function syncUtilitySubcategory() {
+    const typeInput = document.getElementById("typeInput");
+    const catInput = document.getElementById("catInput");
+    const utilitySubcategoryBlock = document.getElementById("utilitySubcategoryBlock");
+    const utilitySubcategoryInput = document.getElementById("utilitySubcategoryInput");
+
+    if (!typeInput || !catInput || !utilitySubcategoryBlock || !utilitySubcategoryInput) return;
+
+    const showUtilitySubcategory = typeInput.value === "Trosak" && catInput.value === UTILITIES_CATEGORY;
+    utilitySubcategoryBlock.style.display = showUtilitySubcategory ? "block" : "none";
+
+    if (showUtilitySubcategory && !utilitySubcategoryInput.value) {
+        utilitySubcategoryInput.value = "Struja";
+    }
+}
+
+function syncDescriptionInput() {
+    const typeInput = document.getElementById("typeInput");
+    const descInput = document.getElementById("descInput");
+
+    if (!typeInput || !descInput) return;
+
+    const selectedCategory = getSelectedExpenseCategory();
+    const shouldAutoFill = typeInput.value === "Trosak"
+        && (AUTO_DESC_CATEGORIES.has(selectedCategory) || selectedCategory.startsWith(`${UTILITIES_CATEGORY} - `));
+
+    if (shouldAutoFill) {
+        descInput.value = selectedCategory;
+        descInput.disabled = true;
+        descInput.placeholder = "Opis se unosi automatski";
+        return;
+    }
+
+    if (descInput.disabled) {
+        descInput.value = "";
+    }
+
+    descInput.disabled = false;
+    descInput.placeholder = "";
+}
+
 
 // ============ TOGGLE INPUTS ============
 export function toggleInputs() {
     const type = document.getElementById("typeInput").value;
 
     const catBlock = document.getElementById("catBlock");
+    const utilitySubcategoryBlock = document.getElementById("utilitySubcategoryBlock");
     const overheadBlock = document.getElementById("overheadBlock");
 
     if (type === "Prihod") {
         catBlock.style.display = "none";
+        if (utilitySubcategoryBlock) utilitySubcategoryBlock.style.display = "none";
         overheadBlock.style.display = "none";
     } else {
         catBlock.style.display = "block";
         overheadBlock.style.display = "block";
     }
+
+    syncUtilitySubcategory();
+    syncDescriptionInput();
 }
 
 
@@ -52,6 +111,14 @@ export function renderTransactionForm() {
                 </select>
             </div>
 
+            <div id="utilitySubcategoryBlock" style="display:none;">
+                <label>Podkategorija režija</label>
+                <select id="utilitySubcategoryInput">
+                    <option value="Struja">Struja</option>
+                    <option value="Voda">Voda</option>
+                </select>
+            </div>
+
             <div id="overheadBlock">
                 <label style="display:flex; align-items:center; gap:8px; margin:8px 0;">
                     <input type="checkbox" id="isOverheadInput" style="width:auto; margin:0;">
@@ -75,6 +142,11 @@ export function renderTransactionForm() {
     });
 
     document.getElementById("typeInput").addEventListener("change", toggleInputs);
+    document.getElementById("catInput").addEventListener("change", () => {
+        syncUtilitySubcategory();
+        syncDescriptionInput();
+    });
+    document.getElementById("utilitySubcategoryInput").addEventListener("change", syncDescriptionInput);
 
     toggleInputs();
 }
