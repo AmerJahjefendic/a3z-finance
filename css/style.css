@@ -283,10 +283,16 @@ input.invalid, select.invalid {
         padding: 15px;
     }
 
-    /* 1. Sakrij klasičnu tabelu */
-    .transactionsTable,
-    .transactionsTable thead {
+    /* 1. Sakrij samo thead tabele transakcija na Home stranici */
+    #home .transactionsTable thead {
         display: none;
+    }
+
+    /* Pretvori tabelu i tbody u blok elemente da card-prikaz radi */
+    #home .transactionsTable,
+    #home .transactionsTable tbody {
+        display: block;
+        width: 100%;
     }
 
     /* 2. Svaki red postaje kartica/blok */
