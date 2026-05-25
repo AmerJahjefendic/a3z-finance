@@ -14,6 +14,11 @@ export function renderImportExportPage() {
             <label>Uvezi JSON:</label>
             <input type="file" id="jsonFile" accept=".json">
             <button id="btnImportJson">Import JSON</button>
+
+            <hr>
+
+            <h3>Test alati (privremeno)</h3>
+            <button id="btnResetAllData" class="delBtn">Obriši sve podatke</button>
         </div>
     `;
 
@@ -28,5 +33,13 @@ export function renderImportExportPage() {
             return;
         }
         importJSON(file);
+    };
+
+    document.getElementById("btnResetAllData").onclick = () => {
+        const ok = window.confirm("Da li ste sigurni da želite obrisati sve lokalne podatke (projekti i transakcije)?");
+        if (!ok) return;
+
+        localStorage.removeItem("A3Z_finance");
+        location.reload();
     };
 }

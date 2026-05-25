@@ -26,12 +26,14 @@
 <div class="tabs">
   <div class="tab active" data-page="home">Home</div>
   <div class="tab" data-page="months">Mjeseci</div>
+  <div class="tab" data-page="projects">Projekti</div>
   <div class="tab" data-page="importExport">Import / Export</div>
 </div>
 
 <!-- Dinamički sadržaj -->
 <div id="home" class="page active"></div>
 <div id="months" class="page"></div>
+<div id="projects" class="page"></div>
 <div id="importExport" class="page"></div>
 
 <!-- Excel export -->
@@ -39,15 +41,6 @@
 
 <!-- Main JS Module -->
 <script type="module" src="js/main.js"></script>
-
-<!-- GLOBAL event listener za typeInput → ispravlja "Prihod problem" -->
-<script>
-  document.addEventListener("change", (e) => {
-    if (e.target && e.target.id === "typeInput") {
-      if (window.toggleInputs) window.toggleInputs(); // radi i u modulima
-    }
-  });
-</script>
 
 <!-- PWA Service Worker registracija -->
 <script>

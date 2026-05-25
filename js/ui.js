@@ -1,21 +1,24 @@
 import { saveTransaction, editTransaction, deleteTransaction, getTransactionsForCurrentMonth } from "./transactions.js";
 import { recalc } from "./calc.js";
 
+function toText(value) {
+    return value == null ? "" : String(value);
+}
+
 
 // ============ TOGGLE INPUTS ============
 export function toggleInputs() {
     const type = document.getElementById("typeInput").value;
 
     const catBlock = document.getElementById("catBlock");
-    const whoBlock = document.getElementById("whoBlock");
+    const overheadBlock = document.getElementById("overheadBlock");
 
     if (type === "Prihod") {
         catBlock.style.display = "none";
-        whoBlock.style.display = "none";
-        document.getElementById("whoInput").value = "Firma";
+        overheadBlock.style.display = "none";
     } else {
         catBlock.style.display = "block";
-        whoBlock.style.display = "block";
+        overheadBlock.style.display = "block";
     }
 }
 
@@ -49,13 +52,11 @@ export function renderTransactionForm() {
                 </select>
             </div>
 
-            <div id="whoBlock">
-                <label>Ko je platio</label>
-                <select id="whoInput">
-                    <option value="Amer">Amer</option>
-                    <option value="Emir">Emir</option>
-                    <option value="Firma">Firma</option>
-                </select>
+            <div id="overheadBlock">
+                <label style="display:flex; align-items:center; gap:8px; margin:8px 0;">
+                    <input type="checkbox" id="isOverheadInput" style="width:auto; margin:0;">
+                    Opšti trošak firme (nije vezan za projekat)
+                </label>
             </div>
 
             <label>Opis</label>
@@ -71,8 +72,6 @@ export function renderTransactionForm() {
     // EVENT LISTENERS
     document.getElementById("saveBtn").addEventListener("click", () => {
         saveTransaction();
-        renderTransactionList();
-        recalc();
     });
 
     document.getElementById("typeInput").addEventListener("change", toggleInputs);
@@ -96,50 +95,58 @@ export function renderTransactionList() {
         tr.classList.add(t.type); 
         // CSS u style.css će koristiti ovu klasu (npr. tr.Prihod ili tr.Trosak)
         
-        tr.innerHTML = `
-            <td>${t.date}</td>
-            <td>${t.desc}</td>
-            <td>${t.cat}</td>
-            <td>${t.amount.toFixed(2)} KM</td>
-            <td>${t.type}</td>
-            <td>${t.who}</td>
-            <td>
-                <button class="smallBtn editBtn" data-id="${t.id}">✏️</button>
-                <button class="smallBtn delBtn" data-id="${t.id}">🗑️</button>
-            </td>
-        `;
+        const dateTd = document.createElement("td");
+        dateTd.textContent = toText(t.date);
+
+        const descTd = document.createElement("td");
+        descTd.textContent = toText(t.desc);
+
+        const catTd = document.createElement("td");
+        catTd.textContent = toText(t.cat);
+
+        const amountTd = document.createElement("td");
+        amountTd.textContent = `${Number(t.amount).toFixed(2)} KM`;
+
+        const typeTd = document.createElement("td");
+        typeTd.textContent = toText(t.type);
+
+        const actionsTd = document.createElement("td");
+        const editBtn = document.createElement("button");
+        editBtn.className = "smallBtn editBtn";
+        editBtn.dataset.id = toText(t.id);
+        editBtn.type = "button";
+        editBtn.textContent = "✏️";
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "smallBtn delBtn";
+        delBtn.dataset.id = toText(t.id);
+        delBtn.type = "button";
+        delBtn.textContent = "🗑️";
+
+        actionsTd.append(editBtn, delBtn);
+        tr.append(dateTd, descTd, catTd, amountTd, typeTd, actionsTd);
 
         list.appendChild(tr);
     });
 
-    
-    list.addEventListener("click", (e) => {
-        if (e.target.classList.contains("editBtn")) {
-            editTransaction(e.target.dataset.id);
-            renderTransactionList();
-            recalc();
-        }
+    if (!list.dataset.boundClick) {
+        list.addEventListener("click", (e) => {
+            const btn = e.target.closest("button");
+            if (!btn || !btn.dataset.id) return;
 
-        if (e.target.classList.contains("delBtn")) {
-            deleteTransaction(e.target.dataset.id);
-            renderTransactionList();
-            recalc();
-        }
-    });
+            if (btn.classList.contains("editBtn")) {
+                editTransaction(btn.dataset.id);
+                renderTransactionList();
+                recalc();
+            }
 
+            if (btn.classList.contains("delBtn")) {
+                deleteTransaction(btn.dataset.id);
+                renderTransactionList();
+                recalc();
+            }
+        });
 
-    // EVENT DELEGATION — moderno i stabilno
-    list.addEventListener("click", (e) => {
-        if (e.target.classList.contains("editBtn")) {
-            editTransaction(e.target.dataset.id);
-            renderTransactionList();
-            recalc();
-        }
-
-        if (e.target.classList.contains("delBtn")) {
-            deleteTransaction(e.target.dataset.id);
-            renderTransactionList();
-            recalc();
-        }
-    });
+        list.dataset.boundClick = "1";
+    }
 }

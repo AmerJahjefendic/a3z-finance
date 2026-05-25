@@ -1,4 +1,5 @@
 import { data } from "./main.js";
+import { OVERHEAD_PROJECT_ID } from "./main.js";
 import { saveToLocal } from "./storage.js";
 import { renderTransactionList } from "./ui.js";
 import { recalc } from "./calc.js";
@@ -20,10 +21,10 @@ export function saveTransaction() {
     const descInput = document.getElementById("descInput");
     const amountInput = document.getElementById("amountInput");
     const catInput = document.getElementById("catInput");
-    const whoInput = document.getElementById("whoInput");
+    const isOverheadInput = document.getElementById("isOverheadInput");
 
     // Čišćenje prethodnih grešaka
-    [dateInput, typeInput, descInput, amountInput, catInput, whoInput].forEach(el => {
+    [dateInput, typeInput, descInput, amountInput, catInput].forEach(el => {
         el.classList.remove("invalid");
     });
     
@@ -60,10 +61,6 @@ export function saveTransaction() {
             catInput.classList.add("invalid");
             isValid = false;
         }
-        if (!whoInput.value) {
-            whoInput.classList.add("invalid");
-            isValid = false;
-        }
     }
     
     // ZAUSTAVI AKO VALIDACIJA NIJE PROŠLA
@@ -76,7 +73,15 @@ export function saveTransaction() {
     // --- LOGIKA SPREMANJA (nepromijenjena) ---
 
     const cat = type === "Trosak" ? catInput.value : "-";
-    const who = type === "Trosak" ? whoInput.value : "Firma";
+    const who = "Firma";
+    const projectId = type === "Trosak" && isOverheadInput?.checked
+        ? OVERHEAD_PROJECT_ID
+        : data.activeProjectId;
+
+    if (!projectId) {
+        alert("Prvo odaberite ili kreirajte projekat.");
+        return;
+    }
 
     // CASE 1: EDIT → ARCHIVE OLD + ADD NEW VERSION
     if (editOriginalId !== null) {
@@ -91,6 +96,7 @@ export function saveTransaction() {
         // Dodaj potpuno novi zapis
         data.transactions.push({
             id: Date.now(),
+            projectId,
             date,
             type,
             desc,
@@ -108,6 +114,7 @@ export function saveTransaction() {
     else {
         data.transactions.push({
             id: Date.now(),
+            projectId,
             date,
             type,
             desc,
@@ -155,7 +162,7 @@ export function editTransaction(id) {
     const descInput = document.getElementById("descInput");
     const amountInput = document.getElementById("amountInput");
     const catInput = document.getElementById("catInput");
-    const whoInput = document.getElementById("whoInput");
+    const isOverheadInput = document.getElementById("isOverheadInput");
     // ===================================
     
     // Popuni formu
@@ -166,7 +173,9 @@ export function editTransaction(id) {
 
     if (t.type === "Trosak") {
         if (catInput) catInput.value = t.cat;
-        if (whoInput) whoInput.value = t.who;
+        if (isOverheadInput) isOverheadInput.checked = t.projectId === OVERHEAD_PROJECT_ID;
+    } else if (isOverheadInput) {
+        isOverheadInput.checked = false;
     }
 
     if (typeInput) typeInput.dispatchEvent(new Event("change"));
@@ -182,8 +191,7 @@ export function editTransaction(id) {
 // ===================================
 
 export function getTransactionsForCurrentMonth() {
-    const month = new Date().toISOString().slice(0, 7);
-    return data.transactions.filter(t => t.date.slice(0, 7) === month);
+    return data.transactions.filter(t => t.projectId === data.activeProjectId);
 }
 
 // ===================================
@@ -197,7 +205,7 @@ function resetForm() {
     const amountInput = document.getElementById("amountInput");
     const typeInput = document.getElementById("typeInput");
     const catInput = document.getElementById("catInput"); 
-    const whoInput = document.getElementById("whoInput"); 
+    const isOverheadInput = document.getElementById("isOverheadInput"); 
     // ===========================================
     
     // Resetovanje osnovnih polja (Provjera je dodana za svaki slučaj)
@@ -212,7 +220,7 @@ function resetForm() {
     
     // Resetovanje Trošak polja
     if (catInput) catInput.value = ""; 
-    if (whoInput) whoInput.value = "";
+    if (isOverheadInput) isOverheadInput.checked = false;
     
     // Ostavite datum kako jeste
     // if (dateInput) dateInput.value = new Date().toISOString().substring(0, 10); 

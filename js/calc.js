@@ -1,59 +1,86 @@
-import { data } from "./main.js";
+import { data, OVERHEAD_PROJECT_ID } from "./main.js";
+
+function getCurrentLocalMonthKey() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    return `${year}-${month}`;
+}
 
 export function recalc() {
-    let amer = 0, emir = 0, income = 0;
-
-    const month = new Date().toISOString().slice(0,7);
+    let monthlyProjectExpense = 0;
+    let monthlyOverheadExpense = 0;
+    let monthlyIncome = 0;
+    let projectIncome = 0;
+    let projectExpense = 0;
+    const activeProject = data.projects.find(p => p.id === data.activeProjectId) || null;
+    const monthKey = getCurrentLocalMonthKey();
 
     data.transactions
-        .filter(t => !t.deleted && t.date.slice(0,7) === month)
+        .filter(t => !t.deleted)
         .forEach(t => {
-            if (t.type === "Trosak") {
-                if (t.who === "Amer") amer += t.amount;
-                if (t.who === "Emir") emir += t.amount;
-            } else {
-                income += t.amount;
+            if (t.date.slice(0, 7) === monthKey) {
+                if (t.type === "Trosak") {
+                    if (t.projectId === OVERHEAD_PROJECT_ID) {
+                        monthlyOverheadExpense += t.amount;
+                    } else {
+                        monthlyProjectExpense += t.amount;
+                    }
+                } else {
+                    monthlyIncome += t.amount;
+                }
+            }
+
+            if (t.projectId === data.activeProjectId && t.type === "Prihod") {
+                projectIncome += t.amount;
+            }
+
+            if (t.projectId === data.activeProjectId && t.type === "Trosak") {
+                projectExpense += t.amount;
             }
         });
 
-    const total = amer + emir;
-    const per = total / 2;
-    const diff = Math.abs(amer - emir) / 2;
-    const netProfit = income - total;
-
-    let msg =
-        amer > emir ? `Emir treba dati Ameru: ${diff.toFixed(2)} KM`
-        : emir > amer ? `Amer treba dati Emiru: ${diff.toFixed(2)} KM`
-        : "Sve izravnato.";
+    const monthlyNetProfit = monthlyIncome - monthlyProjectExpense - monthlyOverheadExpense;
+    const totalPrice = Number(activeProject?.totalPrice || 0);
+    const advance = Number(activeProject?.advance || 0);
+    const remaining = totalPrice - projectIncome;
     
     // ===============================================
     // SIGURNOSNE PROVJERE PRIJE AŽURIRANJA UI-a
     // ===============================================
 
-    // 1. Trosak detalji
-    const amerPaidEl = document.getElementById("amerPaid");
-    if (amerPaidEl) amerPaidEl.innerText = amer.toFixed(2);
-    
-    const emirPaidEl = document.getElementById("emirPaid");
-    if (emirPaidEl) emirPaidEl.innerText = emir.toFixed(2);
-    
-    const totalExpenseEl = document.getElementById("totalExpense");
-    if (totalExpenseEl) totalExpenseEl.innerText = total.toFixed(2);
-    
-    const expensePerPersonEl = document.getElementById("expensePerPerson");
-    if (expensePerPersonEl) expensePerPersonEl.innerText = per.toFixed(2);
-    
-    const expenseBalanceTextEl = document.getElementById("expenseBalanceText");
-    if (expenseBalanceTextEl) expenseBalanceTextEl.innerText = msg;
+    const projectExpenseEl = document.getElementById("projectExpense");
+    if (projectExpenseEl) projectExpenseEl.innerText = monthlyProjectExpense.toFixed(2);
+
+    const overheadExpenseEl = document.getElementById("overheadExpense");
+    if (overheadExpenseEl) overheadExpenseEl.innerText = monthlyOverheadExpense.toFixed(2);
     
     // 2. Prihod/Profit detalji
     const totalIncomeEl = document.getElementById("totalIncome");
-    if (totalIncomeEl) totalIncomeEl.innerText = income.toFixed(2);
+    if (totalIncomeEl) totalIncomeEl.innerText = monthlyIncome.toFixed(2);
     
     const netProfitEl = document.getElementById("netProfit");
-    if (netProfitEl) netProfitEl.innerText = netProfit.toFixed(2);
-    
-    const profitPerPersonEl = document.getElementById("profitPerPerson");
-    if (profitPerPersonEl) profitPerPersonEl.innerText = (netProfit/2).toFixed(2);
+    if (netProfitEl) netProfitEl.innerText = monthlyNetProfit.toFixed(2);
+
+    const activeProjectNameEl = document.getElementById("activeProjectName");
+    if (activeProjectNameEl) activeProjectNameEl.innerText = activeProject?.name || "-";
+
+    const projectTakeoverDateEl = document.getElementById("projectTakeoverDate");
+    if (projectTakeoverDateEl) projectTakeoverDateEl.innerText = activeProject?.takeoverDate || "-";
+
+    const projectTotalPriceEl = document.getElementById("projectTotalPrice");
+    if (projectTotalPriceEl) projectTotalPriceEl.innerText = totalPrice.toFixed(2);
+
+    const projectAdvanceEl = document.getElementById("projectAdvance");
+    if (projectAdvanceEl) projectAdvanceEl.innerText = advance.toFixed(2);
+
+    const projectCollectedEl = document.getElementById("projectCollected");
+    if (projectCollectedEl) projectCollectedEl.innerText = projectIncome.toFixed(2);
+
+    const projectRemainingEl = document.getElementById("projectRemaining");
+    if (projectRemainingEl) projectRemainingEl.innerText = remaining.toFixed(2);
+
+    const projectExpenseAmountEl = document.getElementById("projectExpenseAmount");
+    if (projectExpenseAmountEl) projectExpenseAmountEl.innerText = projectExpense.toFixed(2);
     
 }

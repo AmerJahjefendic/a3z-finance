@@ -1,16 +1,21 @@
-import { data } from "./main.js";
+import { data, getActiveProject } from "./main.js";
 import { exportMonthlyExcel } from "./storage.js";
 
 
 export function renderMonthsPage() {
     const root = document.getElementById("months");
+    const activeProject = getActiveProject();
 
     // Skupljamo sve mjesece iz datuma
-    const months = [...new Set(data.transactions.map(t => t.date.slice(0, 7)))];
+    const months = [...new Set(
+        data.transactions
+            .filter(t => t.projectId === data.activeProjectId)
+            .map(t => t.date.slice(0, 7))
+    )];
 
     root.innerHTML = `
         <div class="card">
-            <h2>Pregled mjeseci</h2>
+            <h2 id="monthsTitle">Pregled mjeseci</h2>
 
             <label>Odaberi mjesec</label>
             <select id="mSelect"></select>
@@ -20,6 +25,11 @@ export function renderMonthsPage() {
             <div id="mTable" style="margin-top:20px;"></div>
         </div>
     `;
+
+    const monthsTitle = document.getElementById("monthsTitle");
+    if (monthsTitle) {
+        monthsTitle.textContent = `Pregled mjeseci - ${activeProject ? activeProject.name : "-"}`;
+    }
 
     const select = document.getElementById("mSelect");
 
@@ -41,8 +51,8 @@ export function renderMonthsPage() {
     select.addEventListener("change", loadMonthTable);
 
     document.getElementById("exportMonthExcel").onclick = () => {
-    exportMonthlyExcel(document.getElementById("mSelect").value);
-};
+        exportMonthlyExcel(document.getElementById("mSelect").value, data.activeProjectId);
+    };
 
     loadMonthTable();
 }
@@ -51,37 +61,47 @@ function loadMonthTable() {
     const m = document.getElementById("mSelect").value;
     const table = document.getElementById("mTable");
 
-    const rows = data.transactions
-        .filter(t => t.date.slice(0, 7) === m)
-        .map(t => `
-            <tr class="${rowClass(t)}" title="${rowTooltip(t)}">
-                <td>${t.date}</td>
-                <td>${t.desc}</td>
-                <td>${t.cat}</td>
-                <td>${t.amount.toFixed(2)} KM</td>
-                <td>${t.type}</td>
-                <td>${t.who}</td>
-            </tr>
-        `)
-        .join("");
+    table.innerHTML = "";
 
-    table.innerHTML = `
-        <table class="transactionsTable">
-            <thead>
-                <tr>
-                    <th>Datum</th>
-                    <th>Opis</th>
-                    <th>Kategorija</th>
-                    <th>Iznos</th>
-                    <th>Tip</th>
-                    <th>Ko je platio</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${rows}
-            </tbody>
-        </table>
-    `;
+    const tableEl = document.createElement("table");
+    tableEl.className = "transactionsTable";
+
+    const thead = document.createElement("thead");
+    const headRow = document.createElement("tr");
+    ["Datum", "Opis", "Kategorija", "Iznos", "Tip"].forEach(label => {
+        const th = document.createElement("th");
+        th.textContent = label;
+        headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+
+    const tbody = document.createElement("tbody");
+    data.transactions
+        .filter(t => t.projectId === data.activeProjectId && t.date.slice(0, 7) === m)
+        .forEach(t => {
+            const tr = document.createElement("tr");
+            tr.className = rowClass(t);
+            tr.title = rowTooltip(t);
+
+            const cells = [
+                String(t.date ?? ""),
+                String(t.desc ?? ""),
+                String(t.cat ?? ""),
+                `${Number(t.amount).toFixed(2)} KM`,
+                String(t.type ?? "")
+            ];
+
+            cells.forEach(value => {
+                const td = document.createElement("td");
+                td.textContent = value;
+                tr.appendChild(td);
+            });
+
+            tbody.appendChild(tr);
+        });
+
+    tableEl.append(thead, tbody);
+    table.appendChild(tableEl);
 }
 
 // =========================================

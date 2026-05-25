@@ -130,17 +130,6 @@ header {
     margin: 8px 0;
 }
 
-/* Istaknut tekst (Balans) */
-#expenseBalanceText {
-    font-size: 1.1em;
-    font-weight: 700;
-    margin-top: 15px;
-    padding: 10px;
-    border-radius: var(--radius);
-    text-align: center;
-    background-color: #f0f0f0; 
-}
-
 
 /* ======================================
     FORM
@@ -343,7 +332,7 @@ input.invalid, select.invalid {
     }
     
     /* 7. Akcije idu na kraj kartice */
-    #transactionList td:nth-child(7) {
+    #transactionList td:nth-child(6) {
         justify-content: flex-end; /* Dugmad idu desno */
         padding-top: 10px;
         border-top: 1px dashed #f0f0f0;
@@ -356,8 +345,7 @@ input.invalid, select.invalid {
     #transactionList td:nth-child(3)::before { content: "Kategorija"; }
     #transactionList td:nth-child(4)::before { content: "Iznos"; }
     #transactionList td:nth-child(5)::before { content: "Tip"; }
-    #transactionList td:nth-child(6)::before { content: "Platio"; }
-    #transactionList td:nth-child(7)::before { content: ""; } /* Ne treba labela za Akcije */
+    #transactionList td:nth-child(6)::before { content: ""; } /* Ne treba labela za Akcije */
 
     .smallBtn {
         font-size: 14px;
@@ -402,53 +390,10 @@ input.invalid, select.invalid {
 .expense-bg { background: var(--danger); }
 .profit-bg { background: var(--primary); }
 
-/* --- Stilovi za detalje plaćanja (Amer/Emir) --- */
-
-.compact-details-card {
-    padding: 15px;
-}
-
-.compact-details-card h4 {
-    margin-top: 0;
-    font-size: 1em;
-    color: var(--primary);
-    border-bottom: 1px solid #f0f0f0;
-    padding-bottom: 8px;
-    margin-bottom: 10px;
-}
-
-.split-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.9em;
-    margin-bottom: 5px;
-}
-
-.total-expense-row {
-    font-size: 0.9em;
-    font-weight: 600;
-    border-top: 1px dashed #f0f0f0;
-    padding-top: 8px;
-    margin-bottom: 0;
-}
-
-/* Istaknuti Balans */
-.balance-highlight {
-    background-color: #FFF3CD; 
-    color: #856404; 
-    border: 1px solid #FFEEBA;
-    padding: 10px;
-    border-radius: var(--radius);
-    text-align: center;
-    font-weight: 600;
-    margin-top: 5px;
-    margin-bottom: 15px; /* Manji razmak */
-}
-
 
 /* --- DESKTOP RASPON --- */
 @media (min-width: 601px) {
     .dashboard-grid {
-        grid-template-columns: repeat(3, 1fr); 
+        grid-template-columns: repeat(2, 1fr);
     }
 }
