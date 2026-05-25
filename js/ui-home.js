@@ -377,6 +377,9 @@ export function renderHome() {
         <div class="card">
             <label>Aktivni projekat</label>
             <select id="projectSelect"></select>
+            <div class="shopping-header-actions" style="margin-top:8px; justify-content:flex-end;">
+                <button id="openTransactionPopupBtn" type="button" class="shopping-toggle-btn">Dodaj transakciju</button>
+            </div>
         </div>
 
         <div class="card">
@@ -411,8 +414,16 @@ export function renderHome() {
         </div>
 
         <div id="shoppingListSection"></div>
-        
-        <div id="transactionForm"></div>
+
+        <div id="transactionFormPopup" class="shopping-popup-backdrop" style="display:none;">
+            <div class="shopping-popup-card" role="dialog" aria-modal="true" aria-label="Dodaj transakciju">
+                <div class="shopping-popup-head">
+                    <h3>Dodaj transakciju</h3>
+                    <button id="closeTransactionPopupBtn" type="button" class="shopping-close-btn" aria-label="Zatvori">×</button>
+                </div>
+                <div id="transactionForm"></div>
+            </div>
+        </div>
 
         <div class="card">
             <h2>Transakcije aktivnog projekta</h2>
@@ -533,6 +544,25 @@ export function renderHome() {
 
         saveToLocal();
         renderHome();
+    });
+
+    const transactionPopup = document.getElementById("transactionFormPopup");
+    const openTransactionPopupBtn = document.getElementById("openTransactionPopupBtn");
+    const closeTransactionPopupBtn = document.getElementById("closeTransactionPopupBtn");
+
+    function openTransactionPopup() {
+        if (transactionPopup) transactionPopup.style.display = "flex";
+    }
+
+    function closeTransactionPopup() {
+        if (transactionPopup) transactionPopup.style.display = "none";
+    }
+
+    openTransactionPopupBtn?.addEventListener("click", openTransactionPopup);
+    closeTransactionPopupBtn?.addEventListener("click", closeTransactionPopup);
+
+    transactionPopup?.addEventListener("click", (e) => {
+        if (e.target === transactionPopup) closeTransactionPopup();
     });
 
     renderTransactionForm();

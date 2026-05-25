@@ -197,6 +197,8 @@ export function renderTransactionList() {
 
             if (btn.classList.contains("editBtn")) {
                 editTransaction(btn.dataset.id);
+                const transactionPopup = document.getElementById("transactionFormPopup");
+                if (transactionPopup) transactionPopup.style.display = "flex";
                 renderTransactionList();
                 recalc();
             }
