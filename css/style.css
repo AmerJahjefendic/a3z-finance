@@ -267,6 +267,11 @@ input.invalid, select.invalid {
     margin: 0;
 }
 
+.shopping-header-actions {
+    display: flex;
+    gap: 10px;
+}
+
 .shopping-toggle-btn {
     width: auto;
     min-width: 140px;
@@ -275,9 +280,61 @@ input.invalid, select.invalid {
 
 .shopping-summary-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
     margin-bottom: 14px;
+}
+
+.shopping-popup-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    background: rgba(0, 0, 0, 0.38);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.shopping-popup-card {
+    width: min(760px, 100%);
+    max-height: 88vh;
+    overflow: auto;
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid #dbe5f6;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+    padding: 18px;
+}
+
+.shopping-popup-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.shopping-popup-head h3 {
+    margin: 0;
+    color: var(--accent);
+}
+
+.shopping-close-btn {
+    width: auto;
+    min-width: 38px;
+    height: 38px;
+    margin-top: 0;
+    padding: 0;
+    border-radius: 50%;
+    font-size: 24px;
+    line-height: 1;
+    background: #ecf1ff;
+    color: var(--primary-dark);
+}
+
+.shopping-close-btn:hover {
+    background: #dbe5ff;
 }
 
 .shopping-stat {
@@ -474,6 +531,7 @@ input.invalid, select.invalid {
     }
 
     .shopping-header,
+    .shopping-header-actions,
     .shopping-toolbar,
     .shopping-form-actions,
     .shopping-item-top,
@@ -491,6 +549,19 @@ input.invalid, select.invalid {
     .shopping-form-actions button,
     .shopping-item-actions .smallBtn {
         width: 100%;
+    }
+
+    .shopping-popup-backdrop {
+        padding: 10px;
+    }
+
+    .shopping-popup-card {
+        max-height: 92vh;
+        padding: 14px;
+    }
+
+    .shopping-close-btn {
+        align-self: flex-end;
     }
 
     .shopping-toolbar select {

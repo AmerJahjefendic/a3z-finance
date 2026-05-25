@@ -47,7 +47,7 @@ function resetShoppingItemForm() {
     const dimensionsEl = document.getElementById("shoppingItemDimensions");
     const noteEl = document.getElementById("shoppingItemNote");
     const submitEl = document.getElementById("saveShoppingItemBtn");
-    const cancelEl = document.getElementById("cancelShoppingItemEditBtn");
+    const titleEl = document.getElementById("shoppingFormTitle");
 
     if (idEl) idEl.value = "";
     if (nameEl) nameEl.value = "";
@@ -55,7 +55,7 @@ function resetShoppingItemForm() {
     if (dimensionsEl) dimensionsEl.value = "";
     if (noteEl) noteEl.value = "";
     if (submitEl) submitEl.textContent = "Dodaj stavku";
-    if (cancelEl) cancelEl.style.display = "none";
+    if (titleEl) titleEl.textContent = "Dodaj stavku";
 }
 
 function fillShoppingItemForm(item) {
@@ -65,7 +65,7 @@ function fillShoppingItemForm(item) {
     const dimensionsEl = document.getElementById("shoppingItemDimensions");
     const noteEl = document.getElementById("shoppingItemNote");
     const submitEl = document.getElementById("saveShoppingItemBtn");
-    const cancelEl = document.getElementById("cancelShoppingItemEditBtn");
+    const titleEl = document.getElementById("shoppingFormTitle");
 
     if (idEl) idEl.value = item.id;
     if (nameEl) nameEl.value = item.name || "";
@@ -73,7 +73,7 @@ function fillShoppingItemForm(item) {
     if (dimensionsEl) dimensionsEl.value = item.dimensions || "";
     if (noteEl) noteEl.value = item.note || "";
     if (submitEl) submitEl.textContent = "Spremi stavku";
-    if (cancelEl) cancelEl.style.display = "inline-flex";
+    if (titleEl) titleEl.textContent = "Uredi stavku";
 }
 
 function renderShoppingListSection() {
@@ -96,7 +96,10 @@ function renderShoppingListSection() {
                     <h2>Lista za kupovinu</h2>
                     <p class="shopping-subtitle">Plan kupovine za projekat ${activeProject.name}</p>
                 </div>
-                <button id="toggleShoppingListBtn" type="button" class="secondaryBtn shopping-toggle-btn">Prikaži listu</button>
+                <div class="shopping-header-actions">
+                    <button id="openShoppingListBtn" type="button" class="secondaryBtn shopping-toggle-btn">Prikaži listu</button>
+                    <button id="openShoppingFormBtn" type="button" class="shopping-toggle-btn">Dodaj stavku</button>
+                </div>
             </div>
 
             <div class="shopping-summary-grid">
@@ -113,14 +116,32 @@ function renderShoppingListSection() {
                     <strong>${summary.planned}</strong>
                 </div>
             </div>
+        </div>
 
-            <div id="shoppingListPanel" style="display:none;">
+        <div id="shoppingListPopup" class="shopping-popup-backdrop" style="display:none;">
+            <div class="shopping-popup-card" role="dialog" aria-modal="true" aria-label="Lista za kupovinu">
+                <div class="shopping-popup-head">
+                    <h3>Lista za kupovinu</h3>
+                    <button id="closeShoppingListPopupBtn" type="button" class="shopping-close-btn" aria-label="Zatvori listu">×</button>
+                </div>
+
                 <div class="shopping-toolbar">
                     <select id="shoppingFilterInput">
                         <option value="all">Sve stavke</option>
                         <option value="planned">Planirano</option>
                         <option value="purchased">Kupljeno</option>
                     </select>
+                </div>
+
+                <div id="shoppingListItems" class="shopping-items"></div>
+            </div>
+        </div>
+
+        <div id="shoppingFormPopup" class="shopping-popup-backdrop" style="display:none;">
+            <div class="shopping-popup-card" role="dialog" aria-modal="true" aria-label="Dodaj stavku za kupovinu">
+                <div class="shopping-popup-head">
+                    <h3 id="shoppingFormTitle">Dodaj stavku</h3>
+                    <button id="closeShoppingFormPopupBtn" type="button" class="shopping-close-btn" aria-label="Zatvori formu">×</button>
                 </div>
 
                 <div class="shopping-form-grid">
@@ -149,17 +170,41 @@ function renderShoppingListSection() {
 
                 <div class="shopping-form-actions">
                     <button id="saveShoppingItemBtn" type="button">Dodaj stavku</button>
-                    <button id="cancelShoppingItemEditBtn" type="button" class="secondaryBtn" style="display:none;">Odustani</button>
+                    <button id="cancelShoppingItemEditBtn" type="button" class="secondaryBtn">Odustani</button>
                 </div>
-
-                <div id="shoppingListItems" class="shopping-items"></div>
             </div>
         </div>
     `;
 
-    const toggleBtn = document.getElementById("toggleShoppingListBtn");
-    const panel = document.getElementById("shoppingListPanel");
+    const openListBtn = document.getElementById("openShoppingListBtn");
+    const openFormBtn = document.getElementById("openShoppingFormBtn");
+    const closeListBtn = document.getElementById("closeShoppingListPopupBtn");
+    const closeFormBtn = document.getElementById("closeShoppingFormPopupBtn");
+    const listPopup = document.getElementById("shoppingListPopup");
+    const formPopup = document.getElementById("shoppingFormPopup");
     const filterEl = document.getElementById("shoppingFilterInput");
+
+    function openListPopup() {
+        if (!listPopup) return;
+        listPopup.style.display = "flex";
+        renderShoppingItems();
+    }
+
+    function closeListPopup() {
+        if (!listPopup) return;
+        listPopup.style.display = "none";
+    }
+
+    function openFormPopup() {
+        if (!formPopup) return;
+        formPopup.style.display = "flex";
+    }
+
+    function closeFormPopup() {
+        if (!formPopup) return;
+        formPopup.style.display = "none";
+        resetShoppingItemForm();
+    }
 
     function renderShoppingItems() {
         const itemsRoot = document.getElementById("shoppingListItems");
@@ -199,11 +244,20 @@ function renderShoppingListSection() {
         }).join("");
     }
 
-    toggleBtn.addEventListener("click", () => {
-        const isHidden = panel.style.display === "none";
-        panel.style.display = isHidden ? "block" : "none";
-        toggleBtn.textContent = isHidden ? "Sakrij listu" : "Prikaži listu";
-        if (isHidden) renderShoppingItems();
+    openListBtn?.addEventListener("click", openListPopup);
+    openFormBtn?.addEventListener("click", () => {
+        resetShoppingItemForm();
+        openFormPopup();
+    });
+    closeListBtn?.addEventListener("click", closeListPopup);
+    closeFormBtn?.addEventListener("click", closeFormPopup);
+
+    listPopup?.addEventListener("click", (e) => {
+        if (e.target === listPopup) closeListPopup();
+    });
+
+    formPopup?.addEventListener("click", (e) => {
+        if (e.target === formPopup) closeFormPopup();
     });
 
     filterEl?.addEventListener("change", renderShoppingItems);
@@ -258,9 +312,7 @@ function renderShoppingListSection() {
         renderHome();
     });
 
-    document.getElementById("cancelShoppingItemEditBtn")?.addEventListener("click", () => {
-        resetShoppingItemForm();
-    });
+    document.getElementById("cancelShoppingItemEditBtn")?.addEventListener("click", closeFormPopup);
 
     document.getElementById("shoppingListItems")?.addEventListener("click", (e) => {
         const button = e.target.closest("button[data-action]");
@@ -274,6 +326,7 @@ function renderShoppingListSection() {
 
         if (action === "edit") {
             fillShoppingItemForm(item);
+            openFormPopup();
             return;
         }
 
@@ -292,11 +345,7 @@ function renderShoppingListSection() {
         }
     });
 
-    if (summary.total > 0) {
-        panel.style.display = "block";
-        toggleBtn.textContent = "Sakrij listu";
-        renderShoppingItems();
-    }
+    renderShoppingItems();
 }
 
 export function renderHome() {
