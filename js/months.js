@@ -6,6 +6,7 @@ export function renderMonthsPage() {
     const root = document.getElementById("months");
     const activeTransactions = data.transactions.filter(t => !t.deleted);
     const projectMap = new Map(data.projects.map(p => [p.id, p.name]));
+    const projectPriceMap = new Map(data.projects.map(p => [p.id, Number(p.totalPrice || 0)]));
 
     // Skupljamo sve mjesece iz datuma svih aktivnih transakcija
     const months = [...new Set(
@@ -85,7 +86,7 @@ export function renderMonthsPage() {
 
         const thead = document.createElement("thead");
         const headRow = document.createElement("tr");
-        ["Datum", "Projekat", "Prihod", "Rashod"].forEach(label => {
+        ["Datum", "Projekat", "Ugovorena cijena", "Prihod", "Rashod", "Dobit"].forEach(label => {
             const th = document.createElement("th");
             th.textContent = label;
             headRow.appendChild(th);
@@ -113,12 +114,15 @@ export function renderMonthsPage() {
             })
             .forEach(([projectId, sums]) => {
                 const tr = document.createElement("tr");
+                const profit = sums.income - sums.expense;
 
                 const cells = [
                     m,
                     projectMap.get(projectId) || "-",
+                    `${Number(projectPriceMap.get(projectId) || 0).toFixed(2)} KM`,
                     sums.income > 0 ? `${sums.income.toFixed(2)} KM` : "-",
-                    sums.expense > 0 ? `${sums.expense.toFixed(2)} KM` : "-"
+                    sums.expense > 0 ? `${sums.expense.toFixed(2)} KM` : "-",
+                    `${profit.toFixed(2)} KM`
                 ];
 
                 cells.forEach(value => {
