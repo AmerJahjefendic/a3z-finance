@@ -1,17 +1,5 @@
 import { data, DEFAULT_PROJECT_ID, OVERHEAD_PROJECT_ID } from "./main.js";
-
-function createId() {
-    if (window.crypto && typeof window.crypto.randomUUID === "function") {
-        return window.crypto.randomUUID();
-    }
-    return `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
-}
-
-function normalizeMoney(value) {
-    const num = Number(value);
-    if (!Number.isFinite(num)) return 0;
-    return Math.round(num * 100) / 100;
-}
+import { createId, normalizeMoney } from "./utils.js";
 
 function normalizeTransaction(item) {
     if (!item || typeof item !== "object") return null;

@@ -2,19 +2,7 @@ import { recalc } from "./calc.js";
 import { renderTransactionForm, renderTransactionList } from "./ui.js";
 import { addProject, data, getActiveProject, setActiveProject } from "./main.js";
 import { saveToLocal } from "./storage.js";
-
-function createId() {
-    if (window.crypto && typeof window.crypto.randomUUID === "function") {
-        return window.crypto.randomUUID();
-    }
-    return `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
-}
-
-function normalizeMoney(value) {
-    const num = Number(value);
-    if (!Number.isFinite(num)) return 0;
-    return Math.round(num * 100) / 100;
-}
+import { createId, normalizeMoney } from "./utils.js";
 
 function preventWheelValueChange(inputEl) {
     if (!inputEl) return;

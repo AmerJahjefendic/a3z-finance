@@ -1,21 +1,9 @@
 import { saveTransaction, editTransaction, deleteTransaction, getTransactionsForCurrentMonth } from "./transactions.js";
 import { recalc } from "./calc.js";
+import { getSelectedExpenseCategory, isAutoDescriptionCategory, UTILITIES_CATEGORY } from "./expenseCategories.js";
 
 function toText(value) {
     return value == null ? "" : String(value);
-}
-
-const AUTO_DESC_CATEGORIES = new Set(["Prevoz", "Kirija"]);
-const UTILITIES_CATEGORY = "Režije";
-
-function getSelectedExpenseCategory() {
-    const catInput = document.getElementById("catInput");
-    const utilitySubcategoryInput = document.getElementById("utilitySubcategoryInput");
-
-    if (!catInput) return "";
-    if (catInput.value !== UTILITIES_CATEGORY) return catInput.value;
-    if (!utilitySubcategoryInput?.value) return "";
-    return `${UTILITIES_CATEGORY} - ${utilitySubcategoryInput.value}`;
 }
 
 function syncUtilitySubcategory() {
@@ -40,9 +28,10 @@ function syncDescriptionInput() {
 
     if (!typeInput || !descInput) return;
 
-    const selectedCategory = getSelectedExpenseCategory();
-    const shouldAutoFill = typeInput.value === "Trosak"
-        && (AUTO_DESC_CATEGORIES.has(selectedCategory) || selectedCategory.startsWith(`${UTILITIES_CATEGORY} - `));
+    const catInput = document.getElementById("catInput");
+    const utilitySubcategoryInput = document.getElementById("utilitySubcategoryInput");
+    const selectedCategory = getSelectedExpenseCategory(catInput?.value, utilitySubcategoryInput?.value);
+    const shouldAutoFill = typeInput.value === "Trosak" && isAutoDescriptionCategory(selectedCategory);
 
     if (shouldAutoFill) {
         descInput.value = selectedCategory;

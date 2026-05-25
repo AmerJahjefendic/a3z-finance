@@ -1,27 +1,18 @@
 import { activateTab, data, OVERHEAD_PROJECT_ID, setActiveProject } from "./main.js";
 import { saveToLocal } from "./storage.js";
-
-const AUTO_DESC_CATEGORIES = new Set(["Prevoz", "Kirija"]);
-const UTILITIES_CATEGORY = "Režije";
+import { createId, normalizeMoney } from "./utils.js";
+import {
+    getSelectedExpenseCategory,
+    isAutoDescriptionCategory,
+    parseExpenseCategory,
+    UTILITIES_CATEGORY
+} from "./expenseCategories.js";
 
 function formatDate(dateStr) {
     if (!dateStr) return "-";
     const [year, month, day] = String(dateStr).slice(0, 10).split("-");
     if (!year || !month || !day) return String(dateStr);
     return `${day}.${month}.${year}.`;
-}
-
-function createId() {
-    if (window.crypto && typeof window.crypto.randomUUID === "function") {
-        return window.crypto.randomUUID();
-    }
-    return `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
-}
-
-function normalizeMoney(value) {
-    const num = Number(value);
-    if (!Number.isFinite(num)) return 0;
-    return Math.round(num * 100) / 100;
 }
 
 function preventWheelValueChange(inputEl) {
@@ -40,31 +31,7 @@ function getCompanyExpenses() {
 function getSelectedCompanyExpenseCategory() {
     const catInput = document.getElementById("editCompanyExpenseCategory");
     const utilitySubcategoryInput = document.getElementById("editCompanyExpenseUtilitySubcategory");
-
-    if (!catInput) return "";
-    if (catInput.value !== UTILITIES_CATEGORY) return catInput.value;
-    if (!utilitySubcategoryInput?.value) return "";
-
-    return `${UTILITIES_CATEGORY} - ${utilitySubcategoryInput.value}`;
-}
-
-function isAutoDescriptionCategory(category) {
-    return AUTO_DESC_CATEGORIES.has(category) || String(category).startsWith(`${UTILITIES_CATEGORY} - `);
-}
-
-function parseExpenseCategory(category) {
-    const categoryText = String(category || "");
-    if (categoryText.startsWith(`${UTILITIES_CATEGORY} - `)) {
-        return {
-            main: UTILITIES_CATEGORY,
-            sub: categoryText.slice(`${UTILITIES_CATEGORY} - `.length) || "Struja"
-        };
-    }
-
-    return {
-        main: categoryText || "Materijal",
-        sub: "Struja"
-    };
+    return getSelectedExpenseCategory(catInput?.value, utilitySubcategoryInput?.value);
 }
 
 function syncCompanyExpenseUtilitySubcategory() {
@@ -215,22 +182,6 @@ export function renderProjectsPage() {
         </div>
 
         <div class="card">
-            <h2>Uredi projekat</h2>
-            <input type="hidden" id="editProjectId">
-
-            <label>Ime projekta / kupca</label>
-            <input type="text" id="editProjectName" placeholder="Odaberi projekat iz tabele">
-
-            <label>Ukupna cijena projekta (KM)</label>
-            <input type="number" id="editProjectTotal" min="0" step="0.01">
-
-            <label>Predujam (KM)</label>
-            <input type="number" id="editProjectAdvance" min="0" step="0.01">
-
-            <button id="saveProjectChangesBtn">Spremi izmjene</button>
-        </div>
-
-        <div class="card">
             <h2>Troškovi firme</h2>
             <table class="transactionsTable">
                 <thead>
@@ -246,47 +197,99 @@ export function renderProjectsPage() {
             </table>
         </div>
 
-        <div class="card">
-            <h2>Uredi trošak firme</h2>
-            <input type="hidden" id="editCompanyExpenseId">
+        <div id="editProjectPopup" class="shopping-popup-backdrop" style="display:none;">
+            <div class="shopping-popup-card" role="dialog" aria-modal="true" aria-label="Uredi projekat">
+                <div class="shopping-popup-head">
+                    <h3>Uredi projekat</h3>
+                    <button id="closeEditProjectPopupBtn" type="button" class="shopping-close-btn" aria-label="Zatvori">×</button>
+                </div>
 
-            <label>Datum</label>
-            <input type="date" id="editCompanyExpenseDate">
+                <input type="hidden" id="editProjectId">
 
-            <label>Kategorija</label>
-            <select id="editCompanyExpenseCategory">
-                <option value="Materijal">Materijal</option>
-                <option value="Alat">Alat</option>
-                <option value="Prevoz">Prevoz</option>
-                <option value="Kirija">Kirija</option>
-                <option value="Režije">Režije</option>
-                <option value="Ostalo">Ostalo</option>
-            </select>
+                <label>Ime projekta / kupca</label>
+                <input type="text" id="editProjectName" placeholder="Odaberi projekat iz tabele">
 
-            <div id="editCompanyExpenseUtilityBlock" style="display:none;">
-                <label>Podkategorija režija</label>
-                <select id="editCompanyExpenseUtilitySubcategory">
-                    <option value="Struja">Struja</option>
-                    <option value="Voda">Voda</option>
-                </select>
+                <label>Ukupna cijena projekta (KM)</label>
+                <input type="number" id="editProjectTotal" min="0" step="0.01">
+
+                <label>Predujam (KM)</label>
+                <input type="number" id="editProjectAdvance" min="0" step="0.01">
+
+                <div class="shopping-form-actions">
+                    <button id="saveProjectChangesBtn" type="button">Spremi izmjene</button>
+                    <button id="cancelEditProjectPopupBtn" type="button" class="secondaryBtn">Odustani</button>
+                </div>
             </div>
+        </div>
 
-            <label>Opis</label>
-            <input type="text" id="editCompanyExpenseDescription" placeholder="Odaberi trošak iz tabele">
+        <div id="editCompanyExpensePopup" class="shopping-popup-backdrop" style="display:none;">
+            <div class="shopping-popup-card" role="dialog" aria-modal="true" aria-label="Uredi trošak firme">
+                <div class="shopping-popup-head">
+                    <h3>Uredi trošak firme</h3>
+                    <button id="closeEditCompanyExpensePopupBtn" type="button" class="shopping-close-btn" aria-label="Zatvori">×</button>
+                </div>
 
-            <label>Iznos (KM)</label>
-            <input type="number" id="editCompanyExpenseAmount" min="0" step="0.01">
+                <input type="hidden" id="editCompanyExpenseId">
 
-            <button id="saveCompanyExpenseChangesBtn">Spremi izmjene troška</button>
+                <label>Datum</label>
+                <input type="date" id="editCompanyExpenseDate">
+
+                <label>Kategorija</label>
+                <select id="editCompanyExpenseCategory">
+                    <option value="Materijal">Materijal</option>
+                    <option value="Alat">Alat</option>
+                    <option value="Prevoz">Prevoz</option>
+                    <option value="Kirija">Kirija</option>
+                    <option value="Režije">Režije</option>
+                    <option value="Ostalo">Ostalo</option>
+                </select>
+
+                <div id="editCompanyExpenseUtilityBlock" style="display:none;">
+                    <label>Podkategorija režija</label>
+                    <select id="editCompanyExpenseUtilitySubcategory">
+                        <option value="Struja">Struja</option>
+                        <option value="Voda">Voda</option>
+                    </select>
+                </div>
+
+                <label>Opis</label>
+                <input type="text" id="editCompanyExpenseDescription" placeholder="Odaberi trošak iz tabele">
+
+                <label>Iznos (KM)</label>
+                <input type="number" id="editCompanyExpenseAmount" min="0" step="0.01">
+
+                <div class="shopping-form-actions">
+                    <button id="saveCompanyExpenseChangesBtn" type="button">Spremi izmjene troška</button>
+                    <button id="cancelEditCompanyExpensePopupBtn" type="button" class="secondaryBtn">Odustani</button>
+                </div>
+            </div>
         </div>
     `;
 
     const listActive = document.getElementById("projectsListActive");
     const listArchived = document.getElementById("projectsListArchived");
     const companyExpensesList = document.getElementById("companyExpensesList");
+    const editProjectPopup = document.getElementById("editProjectPopup");
+    const editCompanyExpensePopup = document.getElementById("editCompanyExpensePopup");
     listActive.innerHTML = "";
     listArchived.innerHTML = "";
     companyExpensesList.innerHTML = "";
+
+    function openEditProjectPopup() {
+        if (editProjectPopup) editProjectPopup.style.display = "flex";
+    }
+
+    function closeEditProjectPopup() {
+        if (editProjectPopup) editProjectPopup.style.display = "none";
+    }
+
+    function openEditCompanyExpensePopup() {
+        if (editCompanyExpensePopup) editCompanyExpensePopup.style.display = "flex";
+    }
+
+    function closeEditCompanyExpensePopup() {
+        if (editCompanyExpensePopup) editCompanyExpensePopup.style.display = "none";
+    }
 
     const allProjects = data.projects
         .filter(project => !project.system)
@@ -346,6 +349,7 @@ export function renderProjectsPage() {
             document.getElementById("editProjectName").value = project.name;
             document.getElementById("editProjectTotal").value = Number(project.totalPrice || 0);
             document.getElementById("editProjectAdvance").value = Number(project.advance || 0);
+            openEditProjectPopup();
         });
 
         const archiveBtn = document.createElement("button");
@@ -411,7 +415,7 @@ export function renderProjectsPage() {
         editBtn.type = "button";
         editBtn.textContent = "Uredi";
         editBtn.addEventListener("click", () => {
-            const parsedCategory = parseExpenseCategory(expense.cat);
+            const parsedCategory = parseExpenseCategory(expense.cat, "Materijal");
             document.getElementById("editCompanyExpenseId").value = expense.id;
             document.getElementById("editCompanyExpenseDate").value = String(expense.date || "").slice(0, 10);
             document.getElementById("editCompanyExpenseCategory").value = parsedCategory.main;
@@ -420,6 +424,7 @@ export function renderProjectsPage() {
             document.getElementById("editCompanyExpenseAmount").value = Number(expense.amount || 0);
             syncCompanyExpenseUtilitySubcategory();
             syncCompanyExpenseDescription();
+            openEditCompanyExpensePopup();
         });
 
         const deleteBtn = document.createElement("button");
@@ -458,6 +463,19 @@ export function renderProjectsPage() {
     preventWheelValueChange(editProjectTotalEl);
     preventWheelValueChange(editProjectAdvanceEl);
     preventWheelValueChange(editCompanyExpenseAmountEl);
+
+    document.getElementById("closeEditProjectPopupBtn")?.addEventListener("click", closeEditProjectPopup);
+    document.getElementById("cancelEditProjectPopupBtn")?.addEventListener("click", closeEditProjectPopup);
+    document.getElementById("closeEditCompanyExpensePopupBtn")?.addEventListener("click", closeEditCompanyExpensePopup);
+    document.getElementById("cancelEditCompanyExpensePopupBtn")?.addEventListener("click", closeEditCompanyExpensePopup);
+
+    editProjectPopup?.addEventListener("click", (e) => {
+        if (e.target === editProjectPopup) closeEditProjectPopup();
+    });
+
+    editCompanyExpensePopup?.addEventListener("click", (e) => {
+        if (e.target === editCompanyExpensePopup) closeEditCompanyExpensePopup();
+    });
 
     document.getElementById("editCompanyExpenseCategory").addEventListener("change", () => {
         syncCompanyExpenseUtilitySubcategory();
@@ -510,6 +528,7 @@ export function renderProjectsPage() {
 
         syncAdvanceTransaction(project);
 
+        closeEditProjectPopup();
         saveToLocal();
         renderProjectsPage();
         window.dispatchEvent(new CustomEvent("a3z:dataImported"));
@@ -570,6 +589,7 @@ export function renderProjectsPage() {
         expense.desc = description;
         expense.amount = amount;
 
+        closeEditCompanyExpensePopup();
         saveToLocal();
         renderProjectsPage();
         window.dispatchEvent(new CustomEvent("a3z:dataImported"));

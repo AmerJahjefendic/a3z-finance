@@ -3,38 +3,12 @@ import { OVERHEAD_PROJECT_ID } from "./main.js";
 import { saveToLocal } from "./storage.js";
 import { renderTransactionList } from "./ui.js";
 import { recalc } from "./calc.js";
-
-const AUTO_DESC_CATEGORIES = new Set(["Prevoz", "Kirija"]);
-const UTILITIES_CATEGORY = "Režije";
-
-function getSelectedExpenseCategory() {
-    const catInput = document.getElementById("catInput");
-    const utilitySubcategoryInput = document.getElementById("utilitySubcategoryInput");
-
-    if (!catInput) return "";
-    if (catInput.value !== UTILITIES_CATEGORY) return catInput.value;
-    if (!utilitySubcategoryInput?.value) return "";
-    return `${UTILITIES_CATEGORY} - ${utilitySubcategoryInput.value}`;
-}
-
-function isAutoDescriptionCategory(category) {
-    return AUTO_DESC_CATEGORIES.has(category) || String(category).startsWith(`${UTILITIES_CATEGORY} - `);
-}
-
-function parseExpenseCategory(category) {
-    const categoryText = String(category || "");
-    if (categoryText.startsWith(`${UTILITIES_CATEGORY} - `)) {
-        return {
-            main: UTILITIES_CATEGORY,
-            sub: categoryText.slice(`${UTILITIES_CATEGORY} - `.length) || "Struja"
-        };
-    }
-
-    return {
-        main: categoryText,
-        sub: "Struja"
-    };
-}
+import {
+    getSelectedExpenseCategory,
+    isAutoDescriptionCategory,
+    parseExpenseCategory,
+    UTILITIES_CATEGORY
+} from "./expenseCategories.js";
 
 // ===================================
 // EDIT MODE CONTROL
@@ -66,7 +40,9 @@ export function saveTransaction() {
     const type = typeInput.value;
     const rawDesc = descInput.value.trim();
     const amount = parseFloat(amountInput.value);
-    const selectedCategory = type === "Trosak" ? getSelectedExpenseCategory() : "-";
+    const selectedCategory = type === "Trosak"
+        ? getSelectedExpenseCategory(catInput.value, utilitySubcategoryInput?.value)
+        : "-";
     const desc = type === "Trosak" && isAutoDescriptionCategory(selectedCategory)
         ? selectedCategory
         : rawDesc;
