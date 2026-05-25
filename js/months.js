@@ -1,26 +1,28 @@
-import { data, getActiveProject } from "./main.js";
+import { data } from "./main.js";
 import { exportMonthlyExcel } from "./storage.js";
 
 
 export function renderMonthsPage() {
     const root = document.getElementById("months");
-    const activeProject = getActiveProject();
+    const activeTransactions = data.transactions.filter(t => !t.deleted);
+    const projectMap = new Map(data.projects.map(p => [p.id, p.name]));
 
-    // Skupljamo sve mjesece iz datuma
+    // Skupljamo sve mjesece iz datuma svih aktivnih transakcija
     const months = [...new Set(
-        data.transactions
-            .filter(t => t.projectId === data.activeProjectId)
+        activeTransactions
             .map(t => t.date.slice(0, 7))
     )];
 
     root.innerHTML = `
         <div class="card">
-            <h2 id="monthsTitle">Pregled mjeseci</h2>
+            <h2 id="monthsTitle">Pregled prihoda i rashoda po mjesecu</h2>
 
             <label>Odaberi mjesec</label>
             <select id="mSelect"></select>
 
             <button id="exportMonthExcel" style="margin-top:15px;">Export Excel za mjesec</button>
+
+            <div id="monthSummary" style="margin-top:15px;"></div>
 
             <div id="mTable" style="margin-top:20px;"></div>
         </div>
@@ -28,7 +30,7 @@ export function renderMonthsPage() {
 
     const monthsTitle = document.getElementById("monthsTitle");
     if (monthsTitle) {
-        monthsTitle.textContent = `Pregled mjeseci - ${activeProject ? activeProject.name : "-"}`;
+        monthsTitle.textContent = "Pregled svih prihoda i rashoda po mjesecu";
     }
 
     const select = document.getElementById("mSelect");
@@ -51,73 +53,84 @@ export function renderMonthsPage() {
     select.addEventListener("change", loadMonthTable);
 
     document.getElementById("exportMonthExcel").onclick = () => {
-        exportMonthlyExcel(document.getElementById("mSelect").value, data.activeProjectId);
+        exportMonthlyExcel(document.getElementById("mSelect").value, null);
     };
 
     loadMonthTable();
-}
 
-function loadMonthTable() {
-    const m = document.getElementById("mSelect").value;
-    const table = document.getElementById("mTable");
+    function loadMonthTable() {
+        const m = document.getElementById("mSelect").value;
+        const table = document.getElementById("mTable");
+        const summary = document.getElementById("monthSummary");
 
-    table.innerHTML = "";
+        table.innerHTML = "";
 
-    const tableEl = document.createElement("table");
-    tableEl.className = "transactionsTable";
+        const monthTransactions = activeTransactions.filter(t => t.date.slice(0, 7) === m);
+        const totalIncome = monthTransactions
+            .filter(t => t.type === "Prihod")
+            .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+        const totalExpense = monthTransactions
+            .filter(t => t.type === "Trosak")
+            .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+        const monthNet = totalIncome - totalExpense;
 
-    const thead = document.createElement("thead");
-    const headRow = document.createElement("tr");
-    ["Datum", "Opis", "Kategorija", "Iznos", "Tip"].forEach(label => {
-        const th = document.createElement("th");
-        th.textContent = label;
-        headRow.appendChild(th);
-    });
-    thead.appendChild(headRow);
+        summary.innerHTML = `
+            <p><b>Ukupni prihodi:</b> ${totalIncome.toFixed(2)} KM</p>
+            <p><b>Ukupni rashodi:</b> ${totalExpense.toFixed(2)} KM</p>
+            <p><b>Saldo mjeseca:</b> ${monthNet.toFixed(2)} KM</p>
+        `;
 
-    const tbody = document.createElement("tbody");
-    data.transactions
-        .filter(t => t.projectId === data.activeProjectId && t.date.slice(0, 7) === m)
-        .forEach(t => {
-            const tr = document.createElement("tr");
-            tr.className = rowClass(t);
-            tr.title = rowTooltip(t);
+        const tableEl = document.createElement("table");
+        tableEl.className = "transactionsTable";
 
-            const cells = [
-                String(t.date ?? ""),
-                String(t.desc ?? ""),
-                String(t.cat ?? ""),
-                `${Number(t.amount).toFixed(2)} KM`,
-                String(t.type ?? "")
-            ];
+        const thead = document.createElement("thead");
+        const headRow = document.createElement("tr");
+        ["Datum", "Projekat", "Prihod", "Rashod"].forEach(label => {
+            const th = document.createElement("th");
+            th.textContent = label;
+            headRow.appendChild(th);
+        });
+        thead.appendChild(headRow);
 
-            cells.forEach(value => {
-                const td = document.createElement("td");
-                td.textContent = value;
-                tr.appendChild(td);
-            });
+        const byProject = new Map();
+        monthTransactions.forEach(t => {
+            const key = t.projectId || "-";
+            if (!byProject.has(key)) {
+                byProject.set(key, { income: 0, expense: 0 });
+            }
 
-            tbody.appendChild(tr);
+            const sums = byProject.get(key);
+            if (t.type === "Prihod") sums.income += Number(t.amount || 0);
+            if (t.type === "Trosak") sums.expense += Number(t.amount || 0);
         });
 
-    tableEl.append(thead, tbody);
-    table.appendChild(tableEl);
-}
+        const tbody = document.createElement("tbody");
+        [...byProject.entries()]
+            .sort((a, b) => {
+                const nameA = projectMap.get(a[0]) || "-";
+                const nameB = projectMap.get(b[0]) || "-";
+                return nameA.localeCompare(nameB);
+            })
+            .forEach(([projectId, sums]) => {
+                const tr = document.createElement("tr");
 
-// =========================================
-// Helper: CSS klase za redove
-// =========================================
-function rowClass(t) {
-    if (t.deleted && t.edited) return "edited";
-    if (t.deleted) return "deleted";
-    return "";
-}
+                const cells = [
+                    m,
+                    projectMap.get(projectId) || "-",
+                    sums.income > 0 ? `${sums.income.toFixed(2)} KM` : "-",
+                    sums.expense > 0 ? `${sums.expense.toFixed(2)} KM` : "-"
+                ];
 
-// =========================================
-// Helper: Hover poruka
-// =========================================
-function rowTooltip(t) {
-    if (t.edited) return "Stara verzija (editovana)";
-    if (t.deleted) return "Obrisana transakcija";
-    return "";
+                cells.forEach(value => {
+                    const td = document.createElement("td");
+                    td.textContent = value;
+                    tr.appendChild(td);
+                });
+
+                tbody.appendChild(tr);
+            });
+
+        tableEl.append(thead, tbody);
+        table.appendChild(tableEl);
+    }
 }
