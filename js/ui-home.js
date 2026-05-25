@@ -3,6 +3,13 @@ import { renderTransactionForm, renderTransactionList } from "./ui.js";
 import { addProject, data, getActiveProject, setActiveProject } from "./main.js";
 import { saveToLocal } from "./storage.js";
 
+function createId() {
+    if (window.crypto && typeof window.crypto.randomUUID === "function") {
+        return window.crypto.randomUUID();
+    }
+    return `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
+}
+
 function normalizeMoney(value) {
     const num = Number(value);
     if (!Number.isFinite(num)) return 0;
@@ -14,6 +21,282 @@ function preventWheelValueChange(inputEl) {
     inputEl.addEventListener("wheel", (e) => {
         e.preventDefault();
     }, { passive: false });
+}
+
+function getActiveProjectShoppingItems() {
+    return (data.shoppingList || [])
+        .filter(item => item.projectId === data.activeProjectId)
+        .sort((a, b) => {
+            if (a.status !== b.status) return a.status === "planned" ? -1 : 1;
+            return String(b.createdAt || "").localeCompare(String(a.createdAt || ""));
+        });
+}
+
+function getShoppingSummary(items) {
+    const total = items.length;
+    const purchased = items.filter(item => item.status === "purchased").length;
+    const planned = total - purchased;
+
+    return { total, purchased, planned };
+}
+
+function resetShoppingItemForm() {
+    const idEl = document.getElementById("shoppingItemId");
+    const nameEl = document.getElementById("shoppingItemName");
+    const quantityEl = document.getElementById("shoppingItemQuantity");
+    const dimensionsEl = document.getElementById("shoppingItemDimensions");
+    const noteEl = document.getElementById("shoppingItemNote");
+    const submitEl = document.getElementById("saveShoppingItemBtn");
+    const cancelEl = document.getElementById("cancelShoppingItemEditBtn");
+
+    if (idEl) idEl.value = "";
+    if (nameEl) nameEl.value = "";
+    if (quantityEl) quantityEl.value = "";
+    if (dimensionsEl) dimensionsEl.value = "";
+    if (noteEl) noteEl.value = "";
+    if (submitEl) submitEl.textContent = "Dodaj stavku";
+    if (cancelEl) cancelEl.style.display = "none";
+}
+
+function fillShoppingItemForm(item) {
+    const idEl = document.getElementById("shoppingItemId");
+    const nameEl = document.getElementById("shoppingItemName");
+    const quantityEl = document.getElementById("shoppingItemQuantity");
+    const dimensionsEl = document.getElementById("shoppingItemDimensions");
+    const noteEl = document.getElementById("shoppingItemNote");
+    const submitEl = document.getElementById("saveShoppingItemBtn");
+    const cancelEl = document.getElementById("cancelShoppingItemEditBtn");
+
+    if (idEl) idEl.value = item.id;
+    if (nameEl) nameEl.value = item.name || "";
+    if (quantityEl) quantityEl.value = item.quantity || "";
+    if (dimensionsEl) dimensionsEl.value = item.dimensions || "";
+    if (noteEl) noteEl.value = item.note || "";
+    if (submitEl) submitEl.textContent = "Spremi stavku";
+    if (cancelEl) cancelEl.style.display = "inline-flex";
+}
+
+function renderShoppingListSection() {
+    const activeProject = getActiveProject();
+    const root = document.getElementById("shoppingListSection");
+    if (!root) return;
+
+    if (!activeProject) {
+        root.innerHTML = "";
+        return;
+    }
+
+    const items = getActiveProjectShoppingItems();
+    const summary = getShoppingSummary(items);
+
+    root.innerHTML = `
+        <div class="card shopping-card-shell">
+            <div class="shopping-header">
+                <div>
+                    <h2>Lista za kupovinu</h2>
+                    <p class="shopping-subtitle">Plan kupovine za projekat ${activeProject.name}</p>
+                </div>
+                <button id="toggleShoppingListBtn" type="button" class="secondaryBtn shopping-toggle-btn">Prikaži listu</button>
+            </div>
+
+            <div class="shopping-summary-grid">
+                <div class="shopping-stat">
+                    <span>Ukupno stavki</span>
+                    <strong>${summary.total}</strong>
+                </div>
+                <div class="shopping-stat">
+                    <span>Kupljeno</span>
+                    <strong>${summary.purchased}</strong>
+                </div>
+                <div class="shopping-stat">
+                    <span>Preostalo</span>
+                    <strong>${summary.planned}</strong>
+                </div>
+            </div>
+
+            <div id="shoppingListPanel" style="display:none;">
+                <div class="shopping-toolbar">
+                    <select id="shoppingFilterInput">
+                        <option value="all">Sve stavke</option>
+                        <option value="planned">Planirano</option>
+                        <option value="purchased">Kupljeno</option>
+                    </select>
+                </div>
+
+                <div class="shopping-form-grid">
+                    <input type="hidden" id="shoppingItemId">
+
+                    <div>
+                        <label>Stavka</label>
+                        <input type="text" id="shoppingItemName" placeholder="npr. Iverica bijela">
+                    </div>
+
+                    <div>
+                        <label>Količina</label>
+                        <input type="text" id="shoppingItemQuantity" placeholder="npr. 4 ploče / 12m2">
+                    </div>
+
+                    <div>
+                        <label>Dimenzije</label>
+                        <input type="text" id="shoppingItemDimensions" placeholder="npr. 2800x2070x18 mm">
+                    </div>
+
+                    <div class="shopping-note-block">
+                        <label>Napomena</label>
+                        <input type="text" id="shoppingItemNote" placeholder="Dobavljač, dimenzije, boja...">
+                    </div>
+                </div>
+
+                <div class="shopping-form-actions">
+                    <button id="saveShoppingItemBtn" type="button">Dodaj stavku</button>
+                    <button id="cancelShoppingItemEditBtn" type="button" class="secondaryBtn" style="display:none;">Odustani</button>
+                </div>
+
+                <div id="shoppingListItems" class="shopping-items"></div>
+            </div>
+        </div>
+    `;
+
+    const toggleBtn = document.getElementById("toggleShoppingListBtn");
+    const panel = document.getElementById("shoppingListPanel");
+    const filterEl = document.getElementById("shoppingFilterInput");
+
+    function renderShoppingItems() {
+        const itemsRoot = document.getElementById("shoppingListItems");
+        if (!itemsRoot) return;
+
+        const filterValue = filterEl?.value || "all";
+        const visibleItems = items.filter(item => filterValue === "all" || item.status === filterValue);
+
+        if (visibleItems.length === 0) {
+            itemsRoot.innerHTML = `<div class="shopping-empty">Nema stavki za odabrani filter.</div>`;
+            return;
+        }
+
+        itemsRoot.innerHTML = visibleItems.map(item => {
+            return `
+                <div class="shopping-item ${item.status === "purchased" ? "is-purchased" : ""}" data-item-id="${item.id}">
+                    <div class="shopping-item-top">
+                        <div>
+                            <h3>${item.name}</h3>
+                            <div class="shopping-meta">${item.quantity ? `Količina: ${item.quantity}` : "Bez količine"}</div>
+                        </div>
+                        <span class="shopping-status ${item.status}">${item.status === "purchased" ? "Kupljeno" : "Planirano"}</span>
+                    </div>
+
+                    <div class="shopping-item-body">
+                        <div class="shopping-meta-row"><span>Napomena</span><strong>${item.note || "-"}</strong></div>
+                        <div class="shopping-meta-row"><span>Dimenzije</span><strong>${item.dimensions || "-"}</strong></div>
+                    </div>
+
+                    <div class="shopping-item-actions">
+                        <button type="button" class="smallBtn editBtn" data-action="edit">Uredi</button>
+                        <button type="button" class="smallBtn" data-action="toggle-status">${item.status === "purchased" ? "Vrati" : "Kupljeno"}</button>
+                        <button type="button" class="smallBtn delBtn" data-action="delete">Obriši</button>
+                    </div>
+                </div>
+            `;
+        }).join("");
+    }
+
+    toggleBtn.addEventListener("click", () => {
+        const isHidden = panel.style.display === "none";
+        panel.style.display = isHidden ? "block" : "none";
+        toggleBtn.textContent = isHidden ? "Sakrij listu" : "Prikaži listu";
+        if (isHidden) renderShoppingItems();
+    });
+
+    filterEl?.addEventListener("change", renderShoppingItems);
+
+    document.getElementById("saveShoppingItemBtn")?.addEventListener("click", () => {
+        const idEl = document.getElementById("shoppingItemId");
+        const nameEl = document.getElementById("shoppingItemName");
+        const quantityEl = document.getElementById("shoppingItemQuantity");
+        const dimensionsEl = document.getElementById("shoppingItemDimensions");
+        const noteEl = document.getElementById("shoppingItemNote");
+
+        const id = idEl.value;
+        const name = nameEl.value.trim();
+        const quantity = quantityEl.value.trim();
+        const dimensions = dimensionsEl.value.trim();
+        const note = noteEl.value.trim();
+
+        [nameEl, quantityEl, dimensionsEl, noteEl].forEach(el => el.classList.remove("invalid"));
+
+        let isValid = true;
+        if (!name) {
+            nameEl.classList.add("invalid");
+            isValid = false;
+        }
+        if (!isValid) {
+            alert("Unesite ispravne podatke stavke za kupovinu.");
+            return;
+        }
+
+        const existingItem = (data.shoppingList || []).find(item => String(item.id) === String(id));
+        if (existingItem) {
+            existingItem.name = name;
+            existingItem.quantity = quantity;
+            existingItem.dimensions = dimensions;
+            existingItem.note = note;
+        } else {
+            data.shoppingList.push({
+                id: createId(),
+                projectId: data.activeProjectId,
+                name,
+                quantity,
+                dimensions,
+                note,
+                status: "planned",
+                createdAt: new Date().toISOString(),
+                purchasedAt: null,
+                convertedExpenseId: null
+            });
+        }
+
+        saveToLocal();
+        renderHome();
+    });
+
+    document.getElementById("cancelShoppingItemEditBtn")?.addEventListener("click", () => {
+        resetShoppingItemForm();
+    });
+
+    document.getElementById("shoppingListItems")?.addEventListener("click", (e) => {
+        const button = e.target.closest("button[data-action]");
+        const itemEl = e.target.closest(".shopping-item[data-item-id]");
+        if (!button || !itemEl) return;
+
+        const item = (data.shoppingList || []).find(entry => String(entry.id) === itemEl.dataset.itemId);
+        if (!item) return;
+
+        const action = button.dataset.action;
+
+        if (action === "edit") {
+            fillShoppingItemForm(item);
+            return;
+        }
+
+        if (action === "toggle-status") {
+            item.status = item.status === "purchased" ? "planned" : "purchased";
+            item.purchasedAt = item.status === "purchased" ? new Date().toISOString() : null;
+            saveToLocal();
+            renderHome();
+            return;
+        }
+
+        if (action === "delete") {
+            data.shoppingList = (data.shoppingList || []).filter(entry => String(entry.id) !== String(item.id));
+            saveToLocal();
+            renderHome();
+        }
+    });
+
+    if (summary.total > 0) {
+        panel.style.display = "block";
+        toggleBtn.textContent = "Sakrij listu";
+        renderShoppingItems();
+    }
 }
 
 export function renderHome() {
@@ -89,6 +372,8 @@ export function renderHome() {
             <p>Troškovi projekta: <b><span id="projectExpenseAmount">0</span> KM</b></p>
             <p>Preostalo za naplatu: <b><span id="projectRemaining">0</span> KM</b></p>
         </div>
+
+        <div id="shoppingListSection"></div>
         
         <div id="transactionForm"></div>
 
@@ -214,6 +499,7 @@ export function renderHome() {
     });
 
     renderTransactionForm();
+    renderShoppingListSection();
     renderTransactionList();
     recalc();
 }

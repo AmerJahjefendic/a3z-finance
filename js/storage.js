@@ -44,6 +44,26 @@ function normalizeTransaction(item) {
     return tx;
 }
 
+function normalizeShoppingItem(item) {
+    if (!item || typeof item !== "object") return null;
+
+    const name = typeof item.name === "string" ? item.name.trim() : "";
+    if (!name) return null;
+
+    return {
+        id: item.id ?? createId(),
+        projectId: item.projectId,
+        name,
+        quantity: typeof item.quantity === "string" ? item.quantity.trim() : "",
+        dimensions: typeof item.dimensions === "string" ? item.dimensions.trim() : "",
+        note: typeof item.note === "string" ? item.note.trim() : "",
+        status: item.status === "purchased" ? "purchased" : "planned",
+        createdAt: item.createdAt || new Date().toISOString(),
+        purchasedAt: typeof item.purchasedAt === "string" ? item.purchasedAt : null,
+        convertedExpenseId: item.convertedExpenseId ?? null
+    };
+}
+
 function normalizeProject(item) {
     if (!item || typeof item !== "object") return null;
 
@@ -141,12 +161,22 @@ function parseFinanceData(rawText) {
             projectId: projectIds.has(t.projectId) ? t.projectId : fallbackProjectId
         }));
 
+    const rawShoppingList = Array.isArray(parsed.shoppingList) ? parsed.shoppingList : [];
+    const shoppingList = rawShoppingList
+        .map(normalizeShoppingItem)
+        .filter(Boolean)
+        .map(item => ({
+            ...item,
+            projectId: projectIds.has(item.projectId) ? item.projectId : fallbackProjectId
+        }))
+        .filter(item => item.projectId !== OVERHEAD_PROJECT_ID);
+
     const parsedActiveProject = projects.find(
         p => p.id === parsed.activeProjectId && !p.archived && !p.system
     );
     const activeProjectId = parsedActiveProject ? parsedActiveProject.id : fallbackProjectId;
 
-    return { projects, activeProjectId, transactions };
+    return { projects, activeProjectId, transactions, shoppingList };
 }
 
 export function initStorage() {

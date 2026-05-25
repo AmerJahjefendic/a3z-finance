@@ -50,7 +50,8 @@ function normalizeMoney(value) {
 export let data = {
     projects: [createDefaultProject(), createOverheadProject()],
     activeProjectId: DEFAULT_PROJECT_ID,
-    transactions: []
+    transactions: [],
+    shoppingList: []
 };
 
 // INIT STORAGE (JSON load + LocalStorage backup)

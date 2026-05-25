@@ -171,6 +171,16 @@ button:hover {
     min-width: 60px;
 }
 
+.secondaryBtn {
+    background: #eef3ff;
+    color: var(--primary-dark);
+    border: 1px solid #cbd7ff;
+}
+
+.secondaryBtn:hover {
+    background: #dde8ff;
+}
+
 /* Specifične boje za dugmad */
 .delBtn {
     background: var(--danger);
@@ -240,6 +250,186 @@ input.invalid, select.invalid {
     background-color: #fffafa;
 }
 
+.shopping-card-shell {
+    overflow: hidden;
+}
+
+.shopping-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+
+.shopping-subtitle {
+    color: #6c757d;
+    margin: 0;
+}
+
+.shopping-toggle-btn {
+    width: auto;
+    min-width: 140px;
+    margin-top: 0;
+}
+
+.shopping-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.shopping-stat {
+    background: linear-gradient(180deg, #f6f9ff 0%, #edf3ff 100%);
+    border: 1px solid #d7e3ff;
+    border-radius: 12px;
+    padding: 12px;
+}
+
+.shopping-stat span {
+    display: block;
+    font-size: 13px;
+    color: #6c757d;
+    margin-bottom: 4px;
+}
+
+.shopping-stat strong {
+    font-size: 18px;
+    color: var(--accent);
+}
+
+.shopping-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.shopping-toolbar select {
+    max-width: 220px;
+    margin-bottom: 0;
+}
+
+.shopping-pending-total {
+    font-size: 14px;
+    color: #6c757d;
+}
+
+.shopping-form-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    align-items: end;
+}
+
+.shopping-note-block {
+    grid-column: 1 / -1;
+}
+
+.shopping-form-actions {
+    display: flex;
+    gap: 10px;
+    margin: 8px 0 16px;
+}
+
+.shopping-form-actions button {
+    width: auto;
+    min-width: 150px;
+}
+
+.shopping-items {
+    display: grid;
+    gap: 12px;
+}
+
+.shopping-item {
+    background: #fbfcff;
+    border: 1px solid #dbe5f6;
+    border-radius: 14px;
+    padding: 14px;
+}
+
+.shopping-item.is-purchased {
+    background: #f4fbf4;
+    border-color: #cfe6cf;
+}
+
+.shopping-item-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.shopping-item h3 {
+    margin: 0 0 4px;
+    font-size: 17px;
+    color: var(--accent);
+}
+
+.shopping-meta,
+.shopping-meta-row {
+    font-size: 14px;
+    color: #6c757d;
+}
+
+.shopping-item-body {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.shopping-meta-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.shopping-meta-row strong {
+    color: var(--text);
+}
+
+.shopping-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.shopping-status.planned {
+    background: #fff5d6;
+    color: #8b6a00;
+}
+
+.shopping-status.purchased {
+    background: #dff5df;
+    color: #1e6d34;
+}
+
+.shopping-item-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.shopping-item-actions .smallBtn {
+    width: auto;
+}
+
+.shopping-empty {
+    padding: 16px;
+    text-align: center;
+    border: 1px dashed #cfd7e6;
+    border-radius: 12px;
+    color: #6c757d;
+    background: #f9fbff;
+}
+
 /* ======================================
     MOBILE OPTIMIZATION (Card-Based List)
 ====================================== */
@@ -281,6 +471,34 @@ input.invalid, select.invalid {
 
     .card {
         padding: 15px;
+    }
+
+    .shopping-header,
+    .shopping-toolbar,
+    .shopping-form-actions,
+    .shopping-item-top,
+    .shopping-meta-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .shopping-summary-grid,
+    .shopping-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .shopping-toggle-btn,
+    .shopping-form-actions button,
+    .shopping-item-actions .smallBtn {
+        width: 100%;
+    }
+
+    .shopping-toolbar select {
+        max-width: none;
+    }
+
+    .shopping-item-actions {
+        flex-direction: column;
     }
 
     /* 1. Sakrij samo thead tabele transakcija na Home stranici */

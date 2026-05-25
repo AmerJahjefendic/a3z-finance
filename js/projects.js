@@ -120,6 +120,17 @@ function getProjectStats(projectId) {
     };
 }
 
+function getShoppingListStats(projectId) {
+    const items = (data.shoppingList || []).filter(item => item.projectId === projectId);
+    const total = items.length;
+    const purchased = items.filter(item => item.status === "purchased").length;
+
+    return {
+        total,
+        purchased
+    };
+}
+
 function syncAdvanceTransaction(project) {
     const nextAdvance = Number(project.advance || 0);
     const advanceTx = data.transactions.find(
@@ -170,6 +181,7 @@ export function renderProjectsPage() {
                         <th>Prihod</th>
                         <th>Trošak</th>
                         <th>Neto</th>
+                        <th>Kupovina</th>
                         <th>Status</th>
                         <th>Akcije</th>
                     </tr>
@@ -192,6 +204,7 @@ export function renderProjectsPage() {
                             <th>Prihod</th>
                             <th>Trošak</th>
                             <th>Neto</th>
+                            <th>Kupovina</th>
                             <th>Status</th>
                             <th>Akcije</th>
                         </tr>
@@ -285,6 +298,7 @@ export function renderProjectsPage() {
     // Funkcija za renderiranje redova projekta
     function renderProjectRow(project, listContainer) {
         const stats = getProjectStats(project.id);
+        const shoppingStats = getShoppingListStats(project.id);
         const tr = document.createElement("tr");
 
         const statusText = project.archived ? "Arhiviran" : "Aktivan";
@@ -297,6 +311,7 @@ export function renderProjectsPage() {
             `${stats.income.toFixed(2)} KM`,
             `${stats.expense.toFixed(2)} KM`,
             `${stats.profit.toFixed(2)} KM`,
+            shoppingStats.total > 0 ? `${shoppingStats.purchased}/${shoppingStats.total}` : "-",
             statusText
         ];
 
