@@ -1,6 +1,6 @@
 import { renderHome } from "./ui-home.js";
 import { renderMonthsPage } from "./months.js";
-import { initStorage } from "./storage.js";
+import { exportJSON, getUnsavedExportChanges, initStorage } from "./storage.js";
 import { renderImportExportPage } from "./importExport.js";
 import { renderProjectsPage } from "./projects.js";
 import { createId, normalizeMoney } from "./utils.js";
@@ -122,6 +122,23 @@ function renderActivePage() {
     if (page === "importExport") renderImportExportPage();
 }
 
+function renderSaveReminderState() {
+    const button = document.getElementById("saveChangesBtn");
+    if (!button) return;
+
+    const hasUnsavedChanges = getUnsavedExportChanges();
+    button.classList.toggle("has-unsaved", hasUnsavedChanges);
+    button.textContent = hasUnsavedChanges ? "Sačuvaj izmjene*" : "Sačuvaj izmjene";
+    button.title = hasUnsavedChanges
+        ? "Postoje izmjene koje još nisu izvezene u JSON fajl."
+        : "Sve izmjene su izvezene u JSON fajl.";
+}
+
+document.getElementById("saveChangesBtn")?.addEventListener("click", async () => {
+    await exportJSON();
+    renderSaveReminderState();
+});
+
 // TAB CLICK HANDLER
 document.querySelectorAll(".tab").forEach(tab => {
     tab.addEventListener("click", () => {
@@ -131,7 +148,18 @@ document.querySelectorAll(".tab").forEach(tab => {
 
 window.addEventListener("a3z:dataImported", () => {
     renderActivePage();
+    renderSaveReminderState();
+});
+
+window.addEventListener("a3z:unsavedExportChanged", renderSaveReminderState);
+
+window.addEventListener("beforeunload", (event) => {
+    if (!getUnsavedExportChanges()) return;
+
+    event.preventDefault();
+    event.returnValue = "";
 });
 
 // DEFAULT PAGE
 renderHome();
+renderSaveReminderState();

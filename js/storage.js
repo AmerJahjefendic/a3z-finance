@@ -1,6 +1,31 @@
 import { data, DEFAULT_PROJECT_ID, OVERHEAD_PROJECT_ID } from "./main.js";
 import { createId, normalizeMoney } from "./utils.js";
 
+const UNSAVED_EXPORT_KEY = "A3Z_finance_unsaved_export";
+let hasUnsavedExportChanges = localStorage.getItem(UNSAVED_EXPORT_KEY) === "1";
+
+function notifyUnsavedExportChanged() {
+    window.dispatchEvent(new CustomEvent("a3z:unsavedExportChanged", {
+        detail: { hasUnsavedExportChanges }
+    }));
+}
+
+export function setUnsavedExportChanges(nextValue) {
+    hasUnsavedExportChanges = Boolean(nextValue);
+
+    if (hasUnsavedExportChanges) {
+        localStorage.setItem(UNSAVED_EXPORT_KEY, "1");
+    } else {
+        localStorage.removeItem(UNSAVED_EXPORT_KEY);
+    }
+
+    notifyUnsavedExportChanged();
+}
+
+export function getUnsavedExportChanges() {
+    return hasUnsavedExportChanges;
+}
+
 function normalizeTransaction(item) {
     if (!item || typeof item !== "object") return null;
 
@@ -180,6 +205,7 @@ export function initStorage() {
 
 export function saveToLocal() {
     localStorage.setItem("A3Z_finance", JSON.stringify(data));
+    setUnsavedExportChanges(true);
 }
 
 // =====================
@@ -222,6 +248,8 @@ export async function exportJSON(jsonData = data) {
         await writable.write(JSON.stringify(jsonData, null, 2));
         await writable.close();
 
+        setUnsavedExportChanges(false);
+
         alert("JSON uspješno sačuvan!");
     }
     catch (err) {
@@ -239,6 +267,7 @@ export function importJSON(file) {
         try {
             Object.assign(data, parseFinanceData(e.target.result));
             saveToLocal();
+            setUnsavedExportChanges(false);
 
             alert("JSON učitan!");
             window.dispatchEvent(new CustomEvent("a3z:dataImported"));
