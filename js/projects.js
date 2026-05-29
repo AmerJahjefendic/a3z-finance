@@ -28,6 +28,12 @@ function getCompanyExpenses() {
         .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
 }
 
+function getCurrentMonthKey() {
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    return `${now.getFullYear()}-${month}`;
+}
+
 function getSelectedCompanyExpenseCategory() {
     const catInput = document.getElementById("editCompanyExpenseCategory");
     const utilitySubcategoryInput = document.getElementById("editCompanyExpenseUtilitySubcategory");
@@ -182,7 +188,7 @@ export function renderProjectsPage() {
         </div>
 
         <div class="card">
-            <h2>Troškovi firme</h2>
+            <h2>Troškovi firme (tekući mjesec)</h2>
             <table class="transactionsTable">
                 <thead>
                     <tr>
@@ -195,6 +201,25 @@ export function renderProjectsPage() {
                 </thead>
                 <tbody id="companyExpensesList"></tbody>
             </table>
+        </div>
+
+        <div class="card">
+            <button id="toggleCompanyExpensesArchive" type="button" style="margin-bottom: 12px;">+ Prikaži arhivu troškova firme</button>
+            <div id="companyExpensesArchiveContainer" style="display:none;">
+                <h2>Arhiva troškova firme</h2>
+                <table class="transactionsTable">
+                    <thead>
+                        <tr>
+                            <th>Datum</th>
+                            <th>Kategorija</th>
+                            <th>Opis</th>
+                            <th>Iznos</th>
+                            <th>Akcije</th>
+                        </tr>
+                    </thead>
+                    <tbody id="companyExpensesArchiveList"></tbody>
+                </table>
+            </div>
         </div>
 
         <div id="editProjectPopup" class="shopping-popup-backdrop" style="display:none;">
@@ -269,11 +294,13 @@ export function renderProjectsPage() {
     const listActive = document.getElementById("projectsListActive");
     const listArchived = document.getElementById("projectsListArchived");
     const companyExpensesList = document.getElementById("companyExpensesList");
+    const companyExpensesArchiveList = document.getElementById("companyExpensesArchiveList");
     const editProjectPopup = document.getElementById("editProjectPopup");
     const editCompanyExpensePopup = document.getElementById("editCompanyExpensePopup");
     listActive.innerHTML = "";
     listArchived.innerHTML = "";
     companyExpensesList.innerHTML = "";
+    companyExpensesArchiveList.innerHTML = "";
 
     function openEditProjectPopup() {
         if (editProjectPopup) editProjectPopup.style.display = "flex";
@@ -394,7 +421,11 @@ export function renderProjectsPage() {
         renderProjectRow(project, listArchived);
     });
 
-    getCompanyExpenses().forEach(expense => {
+    const currentMonthKey = getCurrentMonthKey();
+    const currentMonthCompanyExpenses = getCompanyExpenses().filter(expense => String(expense.date || "").slice(0, 7) === currentMonthKey);
+    const archivedCompanyExpenses = getCompanyExpenses().filter(expense => String(expense.date || "").slice(0, 7) !== currentMonthKey);
+
+    function renderCompanyExpenseRow(expense, listContainer) {
         const tr = document.createElement("tr");
 
         [
@@ -440,12 +471,22 @@ export function renderProjectsPage() {
 
         actionsTd.append(editBtn, deleteBtn);
         tr.appendChild(actionsTd);
-        companyExpensesList.appendChild(tr);
+        listContainer.appendChild(tr);
+    }
+
+    currentMonthCompanyExpenses.forEach(expense => {
+        renderCompanyExpenseRow(expense, companyExpensesList);
+    });
+
+    archivedCompanyExpenses.forEach(expense => {
+        renderCompanyExpenseRow(expense, companyExpensesArchiveList);
     });
 
     // Toggle za arhivirane projekte
     const toggleBtn = document.getElementById("toggleArchivedProjects");
     const archivedContainer = document.getElementById("archivedProjectsContainer");
+    const toggleCompanyArchiveBtn = document.getElementById("toggleCompanyExpensesArchive");
+    const companyArchiveContainer = document.getElementById("companyExpensesArchiveContainer");
 
     if (archivedProjects.length === 0) {
         toggleBtn.style.display = "none";
@@ -455,6 +496,18 @@ export function renderProjectsPage() {
         const isHidden = archivedContainer.style.display === "none";
         archivedContainer.style.display = isHidden ? "block" : "none";
         toggleBtn.textContent = isHidden ? "- Sakrij arhivirane projekte" : "+ Prikaži arhivirane projekte";
+    });
+
+    if (archivedCompanyExpenses.length === 0) {
+        toggleCompanyArchiveBtn.style.display = "none";
+    }
+
+    toggleCompanyArchiveBtn?.addEventListener("click", () => {
+        const isHidden = companyArchiveContainer.style.display === "none";
+        companyArchiveContainer.style.display = isHidden ? "block" : "none";
+        toggleCompanyArchiveBtn.textContent = isHidden
+            ? "- Sakrij arhivu troškova firme"
+            : "+ Prikaži arhivu troškova firme";
     });
 
     const editProjectTotalEl = document.getElementById("editProjectTotal");
