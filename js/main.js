@@ -1,6 +1,6 @@
 import { renderHome } from "./ui-home.js";
 import { renderMonthsPage } from "./months.js";
-import { exportJSON, getUnsavedExportChanges, initStorage } from "./storage.js";
+import { exportJSON, getUnsavedExportChanges, initStorage, syncFromSharedJSONOnStartup } from "./storage.js";
 import { renderImportExportPage } from "./importExport.js";
 import { renderProjectsPage } from "./projects.js";
 import { createId, normalizeMoney } from "./utils.js";
@@ -160,6 +160,10 @@ window.addEventListener("beforeunload", (event) => {
     event.returnValue = "";
 });
 
-// DEFAULT PAGE
-renderHome();
-renderSaveReminderState();
+async function startApp() {
+    await syncFromSharedJSONOnStartup();
+    renderHome();
+    renderSaveReminderState();
+}
+
+startApp();

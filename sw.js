@@ -1,4 +1,4 @@
-const CACHE_NAME = "a3z-finance-v2";
+const CACHE_NAME = "a3z-finance-v3";
 const APP_SHELL = [
 	"./",
 	"./index.html",

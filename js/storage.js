@@ -2,6 +2,7 @@ import { data, DEFAULT_PROJECT_ID, OVERHEAD_PROJECT_ID } from "./main.js";
 import { createId, normalizeMoney } from "./utils.js";
 
 const UNSAVED_EXPORT_KEY = "A3Z_finance_unsaved_export";
+const STARTUP_SYNC_URL = "../A3Z_finansije.json";
 let hasUnsavedExportChanges = localStorage.getItem(UNSAVED_EXPORT_KEY) === "1";
 
 function notifyUnsavedExportChanged() {
@@ -200,6 +201,27 @@ export function initStorage() {
         Object.assign(data, parseFinanceData(saved));
     } catch (err) {
         console.error("Neuspjelo učitavanje lokalnih podataka:", err);
+    }
+}
+
+export async function syncFromSharedJSONOnStartup() {
+    try {
+        const response = await fetch(STARTUP_SYNC_URL, {
+            cache: "no-store"
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const rawText = await response.text();
+        Object.assign(data, parseFinanceData(rawText));
+        localStorage.setItem("A3Z_finance", JSON.stringify(data));
+        setUnsavedExportChanges(false);
+        return true;
+    } catch (err) {
+        console.warn("Neuspjelo automatsko učitavanje zajedničkog JSON fajla:", err);
+        return false;
     }
 }
 
