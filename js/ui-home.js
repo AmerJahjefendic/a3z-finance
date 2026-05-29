@@ -3,6 +3,12 @@ import { renderTransactionForm, renderTransactionList } from "./ui.js";
 import { addProject, data, getActiveProject, setActiveProject } from "./main.js";
 import { saveToLocal } from "./storage.js";
 import { createId, normalizeMoney } from "./utils.js";
+import {
+    getSelectedExpenseCategory,
+    isAutoDescriptionCategory,
+    parseExpenseCategory,
+    UTILITIES_CATEGORY
+} from "./expenseCategories.js";
 
 function preventWheelValueChange(inputEl) {
     if (!inputEl) return;
@@ -10,6 +16,150 @@ function preventWheelValueChange(inputEl) {
         e.preventDefault();
     }, { passive: false });
 }
+
+function todayValue() {
+    return new Date().toISOString().slice(0, 10);
+}
+
+function syncHomeCompanyExpenseUtilitySubcategory() {
+    const catInput = document.getElementById("homeCompanyExpenseCategory");
+    const utilitySubcategoryBlock = document.getElementById("homeCompanyExpenseUtilityBlock");
+    const utilitySubcategoryInput = document.getElementById("homeCompanyExpenseUtilitySubcategory");
+
+    if (!catInput || !utilitySubcategoryBlock || !utilitySubcategoryInput) return;
+
+    const shouldShow = catInput.value === UTILITIES_CATEGORY;
+    utilitySubcategoryBlock.style.display = shouldShow ? "block" : "none";
+
+    if (shouldShow && !utilitySubcategoryInput.value) {
+        utilitySubcategoryInput.value = "Struja";
+    }
+}
+
+function syncHomeCompanyExpenseDescription() {
+    const descInput = document.getElementById("homeCompanyExpenseDescription");
+    if (!descInput) return;
+
+    const catInput = document.getElementById("homeCompanyExpenseCategory");
+    const utilitySubcategoryInput = document.getElementById("homeCompanyExpenseUtilitySubcategory");
+    const selectedCategory = getSelectedExpenseCategory(catInput?.value, utilitySubcategoryInput?.value);
+
+    if (isAutoDescriptionCategory(selectedCategory)) {
+        descInput.value = selectedCategory;
+        descInput.disabled = true;
+        descInput.placeholder = "Opis se unosi automatski";
+        return;
+    }
+
+    if (descInput.disabled) {
+        descInput.value = "";
+    }
+
+    descInput.disabled = false;
+    descInput.placeholder = "";
+}
+
+function resetHomeCompanyExpenseForm() {
+    const dateEl = document.getElementById("homeCompanyExpenseDate");
+    const categoryEl = document.getElementById("homeCompanyExpenseCategory");
+    const utilityEl = document.getElementById("homeCompanyExpenseUtilitySubcategory");
+    const descriptionEl = document.getElementById("homeCompanyExpenseDescription");
+    const amountEl = document.getElementById("homeCompanyExpenseAmount");
+
+    if (dateEl) dateEl.value = todayValue();
+    if (categoryEl) categoryEl.value = "Materijal";
+    if (utilityEl) utilityEl.value = "Struja";
+    if (descriptionEl) descriptionEl.value = "";
+    if (amountEl) amountEl.value = "";
+
+    syncHomeCompanyExpenseUtilitySubcategory();
+    syncHomeCompanyExpenseDescription();
+}
+
+function saveHomeCompanyExpense() {
+    const dateEl = document.getElementById("homeCompanyExpenseDate");
+    const categoryEl = document.getElementById("homeCompanyExpenseCategory");
+    const utilityEl = document.getElementById("homeCompanyExpenseUtilitySubcategory");
+    const descriptionEl = document.getElementById("homeCompanyExpenseDescription");
+    const amountEl = document.getElementById("homeCompanyExpenseAmount");
+
+    [dateEl, categoryEl, utilityEl, descriptionEl, amountEl].forEach(el => el?.classList.remove("invalid"));
+
+    const date = dateEl?.value || "";
+    const category = getSelectedExpenseCategory(categoryEl?.value, utilityEl?.value);
+    const amount = normalizeMoney(amountEl?.value || 0);
+    const description = isAutoDescriptionCategory(category)
+        ? category
+        : descriptionEl?.value.trim() || "";
+
+    let isValid = true;
+    if (!date) {
+        dateEl?.classList.add("invalid");
+        isValid = false;
+    }
+    if (!categoryEl?.value) {
+        categoryEl?.classList.add("invalid");
+        isValid = false;
+    }
+    if (categoryEl?.value === UTILITIES_CATEGORY && !utilityEl?.value) {
+        utilityEl?.classList.add("invalid");
+        isValid = false;
+    }
+    if (!description) {
+        descriptionEl?.classList.add("invalid");
+        isValid = false;
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+        amountEl?.classList.add("invalid");
+        isValid = false;
+    }
+
+    if (!isValid) {
+        alert("Unesite ispravne podatke troška firme.");
+        return;
+    }
+
+    data.transactions.push({
+        id: createId(),
+        projectId: "company-overhead",
+        date,
+        type: "Trosak",
+        desc: description,
+        amount,
+        cat: category,
+        who: "Firma",
+        deleted: false
+    });
+
+    saveToLocal();
+    renderHome();
+    window.dispatchEvent(new CustomEvent("a3z:dataImported"));
+}
+
+function setTransactionPopupTab(tabName) {
+    const transactionButton = document.getElementById("transactionPopupTabTransaction");
+    const companyButton = document.getElementById("transactionPopupTabCompany");
+    const transactionPanel = document.getElementById("transactionPopupTransactionPanel");
+    const companyPanel = document.getElementById("transactionPopupCompanyPanel");
+
+    if (!transactionButton || !companyButton || !transactionPanel || !companyPanel) return;
+
+    const showCompany = tabName === "company";
+
+    transactionButton.classList.toggle("active", !showCompany);
+    companyButton.classList.toggle("active", showCompany);
+    transactionButton.setAttribute("aria-selected", String(!showCompany));
+    companyButton.setAttribute("aria-selected", String(showCompany));
+    transactionPanel.style.display = showCompany ? "none" : "block";
+    companyPanel.style.display = showCompany ? "block" : "none";
+
+    if (showCompany) {
+        resetHomeCompanyExpenseForm();
+        document.getElementById("homeCompanyExpenseDate")?.focus();
+    }
+}
+
+window.a3zSetTransactionPopupTab = setTransactionPopupTab;
 
 function getActiveProjectShoppingItems() {
     return (data.shoppingList || [])
@@ -418,10 +568,57 @@ export function renderHome() {
         <div id="transactionFormPopup" class="shopping-popup-backdrop" style="display:none;">
             <div class="shopping-popup-card" role="dialog" aria-modal="true" aria-label="Dodaj transakciju">
                 <div class="shopping-popup-head">
-                    <h3>Dodaj transakciju</h3>
+                    <div>
+                        <h3>Dodaj transakciju</h3>
+                        <div class="popup-tabs" role="tablist" aria-label="Vrsta unosa">
+                            <button id="transactionPopupTabTransaction" type="button" class="popup-tab active" role="tab" aria-selected="true">Transakcija</button>
+                            <button id="transactionPopupTabCompany" type="button" class="popup-tab" role="tab" aria-selected="false">Firma</button>
+                        </div>
+                    </div>
                     <button id="closeTransactionPopupBtn" type="button" class="shopping-close-btn" aria-label="Zatvori">×</button>
                 </div>
-                <div id="transactionForm"></div>
+
+                <div id="transactionPopupTransactionPanel">
+                    <div id="transactionForm"></div>
+                </div>
+
+                <div id="transactionPopupCompanyPanel" style="display:none;">
+                    <div class="card transaction-company-card">
+                        <h2>Brzi unos troška firme</h2>
+
+                        <label>Datum</label>
+                        <input type="date" id="homeCompanyExpenseDate">
+
+                        <label>Kategorija</label>
+                        <select id="homeCompanyExpenseCategory">
+                            <option value="Materijal">Materijal</option>
+                            <option value="Alat">Alat</option>
+                            <option value="Prevoz">Prevoz</option>
+                            <option value="Kirija">Kirija</option>
+                            <option value="Režije">Režije</option>
+                            <option value="Ostalo">Ostalo</option>
+                        </select>
+
+                        <div id="homeCompanyExpenseUtilityBlock" style="display:none;">
+                            <label>Podkategorija režija</label>
+                            <select id="homeCompanyExpenseUtilitySubcategory">
+                                <option value="Struja">Struja</option>
+                                <option value="Voda">Voda</option>
+                            </select>
+                        </div>
+
+                        <label>Opis</label>
+                        <input type="text" id="homeCompanyExpenseDescription" placeholder="Opis troška">
+
+                        <label>Iznos (KM)</label>
+                        <input type="number" id="homeCompanyExpenseAmount" min="0" step="0.01" placeholder="0.00">
+
+                        <div class="shopping-form-actions">
+                            <button id="saveHomeCompanyExpenseBtn" type="button">Spremi trošak firme</button>
+                            <button id="resetHomeCompanyExpenseBtn" type="button" class="secondaryBtn">Očisti</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -549,9 +746,12 @@ export function renderHome() {
     const transactionPopup = document.getElementById("transactionFormPopup");
     const openTransactionPopupBtn = document.getElementById("openTransactionPopupBtn");
     const closeTransactionPopupBtn = document.getElementById("closeTransactionPopupBtn");
+    const transactionPopupTabTransaction = document.getElementById("transactionPopupTabTransaction");
+    const transactionPopupTabCompany = document.getElementById("transactionPopupTabCompany");
 
     function openTransactionPopup() {
         if (transactionPopup) transactionPopup.style.display = "flex";
+        setTransactionPopupTab("transaction");
     }
 
     function closeTransactionPopup() {
@@ -560,12 +760,23 @@ export function renderHome() {
 
     openTransactionPopupBtn?.addEventListener("click", openTransactionPopup);
     closeTransactionPopupBtn?.addEventListener("click", closeTransactionPopup);
+    transactionPopupTabTransaction?.addEventListener("click", () => setTransactionPopupTab("transaction"));
+    transactionPopupTabCompany?.addEventListener("click", () => setTransactionPopupTab("company"));
+
+    document.getElementById("homeCompanyExpenseCategory")?.addEventListener("change", () => {
+        syncHomeCompanyExpenseUtilitySubcategory();
+        syncHomeCompanyExpenseDescription();
+    });
+    document.getElementById("homeCompanyExpenseUtilitySubcategory")?.addEventListener("change", syncHomeCompanyExpenseDescription);
+    document.getElementById("saveHomeCompanyExpenseBtn")?.addEventListener("click", saveHomeCompanyExpense);
+    document.getElementById("resetHomeCompanyExpenseBtn")?.addEventListener("click", resetHomeCompanyExpenseForm);
 
     transactionPopup?.addEventListener("click", (e) => {
         if (e.target === transactionPopup) closeTransactionPopup();
     });
 
     renderTransactionForm();
+    resetHomeCompanyExpenseForm();
     renderShoppingListSection();
     renderTransactionList();
     recalc();

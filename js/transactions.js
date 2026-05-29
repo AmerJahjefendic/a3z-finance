@@ -28,7 +28,6 @@ export function saveTransaction() {
     const amountInput = document.getElementById("amountInput");
     const catInput = document.getElementById("catInput");
     const utilitySubcategoryInput = document.getElementById("utilitySubcategoryInput");
-    const isOverheadInput = document.getElementById("isOverheadInput");
 
     // Čišćenje prethodnih grešaka
     [dateInput, typeInput, descInput, amountInput, catInput, utilitySubcategoryInput].forEach(el => {
@@ -91,9 +90,7 @@ export function saveTransaction() {
 
     const cat = selectedCategory;
     const who = "Firma";
-    const projectId = type === "Trosak" && isOverheadInput?.checked
-        ? OVERHEAD_PROJECT_ID
-        : data.activeProjectId;
+    const projectId = data.activeProjectId;
 
     if (!projectId) {
         alert("Prvo odaberite ili kreirajte projekat.");
@@ -180,7 +177,6 @@ export function editTransaction(id) {
     const amountInput = document.getElementById("amountInput");
     const catInput = document.getElementById("catInput");
     const utilitySubcategoryInput = document.getElementById("utilitySubcategoryInput");
-    const isOverheadInput = document.getElementById("isOverheadInput");
     // ===================================
     
     // Popuni formu
@@ -193,9 +189,6 @@ export function editTransaction(id) {
         const parsedCategory = parseExpenseCategory(t.cat);
         if (catInput) catInput.value = parsedCategory.main;
         if (utilitySubcategoryInput) utilitySubcategoryInput.value = parsedCategory.sub;
-        if (isOverheadInput) isOverheadInput.checked = t.projectId === OVERHEAD_PROJECT_ID;
-    } else if (isOverheadInput) {
-        isOverheadInput.checked = false;
     }
 
     if (typeInput) typeInput.dispatchEvent(new Event("change"));
@@ -226,7 +219,6 @@ function resetForm() {
     const typeInput = document.getElementById("typeInput");
     const catInput = document.getElementById("catInput"); 
     const utilitySubcategoryInput = document.getElementById("utilitySubcategoryInput");
-    const isOverheadInput = document.getElementById("isOverheadInput"); 
     // ===========================================
     
     // Resetovanje osnovnih polja (Provjera je dodana za svaki slučaj)
@@ -242,7 +234,6 @@ function resetForm() {
     // Resetovanje Trošak polja
     if (catInput) catInput.value = "Materijal"; 
     if (utilitySubcategoryInput) utilitySubcategoryInput.value = "Struja";
-    if (isOverheadInput) isOverheadInput.checked = false;
     
     // Ostavite datum kako jeste
     // if (dateInput) dateInput.value = new Date().toISOString().substring(0, 10); 

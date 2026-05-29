@@ -320,6 +320,34 @@ input.invalid, select.invalid {
     color: var(--accent);
 }
 
+.popup-tabs {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.popup-tab {
+    width: auto;
+    min-width: 120px;
+    margin-top: 0;
+    background: #eef3ff;
+    color: var(--primary-dark);
+    border: 1px solid #cbd7ff;
+}
+
+.popup-tab.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+
+.transaction-company-card {
+    margin-top: 6px;
+    box-shadow: none;
+    border: 1px solid #dbe5f6;
+    background: #fbfcff;
+}
+
 .shopping-close-btn {
     width: auto;
     min-width: 38px;
@@ -482,6 +510,88 @@ input.invalid, select.invalid {
     background: #f9fbff;
 }
 
+.filter-bar {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(220px, 0.8fr);
+    gap: 12px;
+    margin: 12px 0 16px;
+    align-items: end;
+}
+
+.filter-field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: 2px;
+}
+
+.filter-field input,
+.filter-field select {
+    margin-bottom: 0;
+}
+
+.table-empty {
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.quick-expense-shell {
+    background: linear-gradient(180deg, #f7faff 0%, #ffffff 100%);
+    border: 1px solid #dbe5f6;
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.quick-expense-head {
+    margin-bottom: 12px;
+}
+
+.quick-expense-head h3 {
+    margin: 0 0 4px;
+    color: var(--accent);
+}
+
+.quick-expense-head p {
+    margin: 0;
+    color: #6c757d;
+    font-size: 14px;
+}
+
+.quick-expense-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+    align-items: end;
+}
+
+.quick-expense-grid label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: 2px;
+}
+
+.quick-expense-grid input,
+.quick-expense-grid select {
+    margin-bottom: 0;
+}
+
+.quick-expense-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.quick-expense-actions button {
+    width: auto;
+    min-width: 160px;
+}
+
 /* ======================================
     MOBILE OPTIMIZATION (Card-Based List)
 ====================================== */
@@ -540,6 +650,18 @@ input.invalid, select.invalid {
         grid-template-columns: 1fr;
     }
 
+    .quick-expense-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .quick-expense-actions button {
+        width: 100%;
+    }
+
+    .filter-bar {
+        grid-template-columns: 1fr;
+    }
+
     .shopping-toggle-btn,
     .shopping-form-actions button,
     .shopping-item-actions .smallBtn {
@@ -553,6 +675,15 @@ input.invalid, select.invalid {
     .shopping-popup-card {
         max-height: 92vh;
         padding: 14px;
+    }
+
+    .popup-tabs {
+        flex-wrap: wrap;
+    }
+
+    .popup-tab {
+        min-width: 0;
+        flex: 1 1 0;
     }
 
     .shopping-close-btn {

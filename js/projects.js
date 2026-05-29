@@ -75,6 +75,47 @@ function syncCompanyExpenseDescription() {
     descInput.placeholder = "";
 }
 
+function getQuickSelectedCompanyExpenseCategory() {
+    const catInput = document.getElementById("quickCompanyExpenseCategory");
+    const utilitySubcategoryInput = document.getElementById("quickCompanyExpenseUtilitySubcategory");
+    return getSelectedExpenseCategory(catInput?.value, utilitySubcategoryInput?.value);
+}
+
+function syncQuickCompanyExpenseUtilitySubcategory() {
+    const catInput = document.getElementById("quickCompanyExpenseCategory");
+    const utilitySubcategoryBlock = document.getElementById("quickCompanyExpenseUtilityBlock");
+    const utilitySubcategoryInput = document.getElementById("quickCompanyExpenseUtilitySubcategory");
+
+    if (!catInput || !utilitySubcategoryBlock || !utilitySubcategoryInput) return;
+
+    const shouldShow = catInput.value === UTILITIES_CATEGORY;
+    utilitySubcategoryBlock.style.display = shouldShow ? "block" : "none";
+
+    if (shouldShow && !utilitySubcategoryInput.value) {
+        utilitySubcategoryInput.value = "Struja";
+    }
+}
+
+function syncQuickCompanyExpenseDescription() {
+    const descInput = document.getElementById("quickCompanyExpenseDescription");
+    if (!descInput) return;
+
+    const selectedCategory = getQuickSelectedCompanyExpenseCategory();
+    if (isAutoDescriptionCategory(selectedCategory)) {
+        descInput.value = selectedCategory;
+        descInput.disabled = true;
+        descInput.placeholder = "Opis se unosi automatski";
+        return;
+    }
+
+    if (descInput.disabled) {
+        descInput.value = "";
+    }
+
+    descInput.disabled = false;
+    descInput.placeholder = "";
+}
+
 function getProjectStats(projectId) {
     let income = 0;
     let expense = 0;
@@ -138,12 +179,52 @@ function syncAdvanceTransaction(project) {
     });
 }
 
+function escapeAttributeValue(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+}
+
 export function renderProjectsPage() {
     const root = document.getElementById("projects");
+
+    const previouslyFocused = document.activeElement;
+    const focusedFilterId = previouslyFocused && root.contains(previouslyFocused)
+        ? previouslyFocused.id
+        : "";
+    const focusedSelectionStart = typeof previouslyFocused?.selectionStart === "number"
+        ? previouslyFocused.selectionStart
+        : null;
+    const focusedSelectionEnd = typeof previouslyFocused?.selectionEnd === "number"
+        ? previouslyFocused.selectionEnd
+        : null;
+
+    const projectsSearchValue = document.getElementById("projectsSearchInput")?.value.trim() || "";
+    const projectsStatusValue = document.getElementById("projectsStatusFilter")?.value || "all";
+    const companyExpenseSearchValue = document.getElementById("companyExpenseSearchInput")?.value.trim() || "";
+    const companyExpenseScopeValue = document.getElementById("companyExpenseScopeFilter")?.value || "all";
+    const archivedProjectsContainerState = document.getElementById("archivedProjectsContainer")?.style.display || "none";
+    const companyExpensesArchiveContainerState = document.getElementById("companyExpensesArchiveContainer")?.style.display || "none";
 
     root.innerHTML = `
         <div class="card">
             <h2>Aktivni projekti</h2>
+            <div class="filter-bar">
+                <div class="filter-field">
+                    <label>Pretraga projekta</label>
+                    <input type="search" id="projectsSearchInput" placeholder="Naziv projekta ili kupca" value="${escapeAttributeValue(projectsSearchValue)}">
+                </div>
+                <div class="filter-field">
+                    <label>Status</label>
+                    <select id="projectsStatusFilter">
+                        <option value="all"${projectsStatusValue === "all" ? " selected" : ""}>Svi projekti</option>
+                        <option value="active"${projectsStatusValue === "active" ? " selected" : ""}>Aktivni</option>
+                        <option value="archived"${projectsStatusValue === "archived" ? " selected" : ""}>Arhivirani</option>
+                    </select>
+                </div>
+            </div>
             <table class="transactionsTable">
                 <thead>
                     <tr>
@@ -165,7 +246,7 @@ export function renderProjectsPage() {
 
         <div class="card">
             <button id="toggleArchivedProjects" type="button" style="margin-bottom: 12px;">+ Prikaži arhivirane projekte</button>
-            <div id="archivedProjectsContainer" style="display:none;">
+            <div id="archivedProjectsContainer" style="display:${archivedProjectsContainerState};">
                 <h2>Arhivirani projekti</h2>
                 <table class="transactionsTable">
                     <thead>
@@ -189,6 +270,71 @@ export function renderProjectsPage() {
 
         <div class="card">
             <h2>Troškovi firme (tekući mjesec)</h2>
+            <div class="quick-expense-shell">
+                <div class="quick-expense-head">
+                    <div>
+                        <h3>Brzi unos troška firme</h3>
+                        <p>Dodaj novi trošak bez otvaranja edit popupa.</p>
+                    </div>
+                </div>
+
+                <div class="quick-expense-grid">
+                    <div>
+                        <label>Datum</label>
+                        <input type="date" id="quickCompanyExpenseDate">
+                    </div>
+
+                    <div>
+                        <label>Kategorija</label>
+                        <select id="quickCompanyExpenseCategory">
+                            <option value="Materijal">Materijal</option>
+                            <option value="Alat">Alat</option>
+                            <option value="Prevoz">Prevoz</option>
+                            <option value="Kirija">Kirija</option>
+                            <option value="Režije">Režije</option>
+                            <option value="Ostalo">Ostalo</option>
+                        </select>
+                    </div>
+
+                    <div id="quickCompanyExpenseUtilityBlock" style="display:none;">
+                        <label>Podkategorija režija</label>
+                        <select id="quickCompanyExpenseUtilitySubcategory">
+                            <option value="Struja">Struja</option>
+                            <option value="Voda">Voda</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label>Opis</label>
+                        <input type="text" id="quickCompanyExpenseDescription" placeholder="Opis troška">
+                    </div>
+
+                    <div>
+                        <label>Iznos (KM)</label>
+                        <input type="number" id="quickCompanyExpenseAmount" min="0" step="0.01" placeholder="0.00">
+                    </div>
+                </div>
+
+                <div class="quick-expense-actions">
+                    <button id="saveQuickCompanyExpenseBtn" type="button">Brzo dodaj trošak</button>
+                    <button id="resetQuickCompanyExpenseBtn" type="button" class="secondaryBtn">Očisti</button>
+                </div>
+            </div>
+
+            <div class="filter-bar">
+                <div class="filter-field">
+                    <label>Pretraga troška</label>
+                    <input type="search" id="companyExpenseSearchInput" placeholder="Datum, kategorija ili opis" value="${escapeAttributeValue(companyExpenseSearchValue)}">
+                </div>
+                <div class="filter-field">
+                    <label>Prikaz</label>
+                    <select id="companyExpenseScopeFilter">
+                        <option value="all"${companyExpenseScopeValue === "all" ? " selected" : ""}>Tekući mjesec i arhiva</option>
+                        <option value="current"${companyExpenseScopeValue === "current" ? " selected" : ""}>Samo tekući mjesec</option>
+                        <option value="archive"${companyExpenseScopeValue === "archive" ? " selected" : ""}>Samo arhiva</option>
+                    </select>
+                </div>
+            </div>
             <table class="transactionsTable">
                 <thead>
                     <tr>
@@ -205,7 +351,7 @@ export function renderProjectsPage() {
 
         <div class="card">
             <button id="toggleCompanyExpensesArchive" type="button" style="margin-bottom: 12px;">+ Prikaži arhivu troškova firme</button>
-            <div id="companyExpensesArchiveContainer" style="display:none;">
+            <div id="companyExpensesArchiveContainer" style="display:${companyExpensesArchiveContainerState};">
                 <h2>Arhiva troškova firme</h2>
                 <table class="transactionsTable">
                     <thead>
@@ -297,6 +443,11 @@ export function renderProjectsPage() {
     const companyExpensesArchiveList = document.getElementById("companyExpensesArchiveList");
     const editProjectPopup = document.getElementById("editProjectPopup");
     const editCompanyExpensePopup = document.getElementById("editCompanyExpensePopup");
+    const quickCompanyExpenseDateEl = document.getElementById("quickCompanyExpenseDate");
+    const quickCompanyExpenseCategoryEl = document.getElementById("quickCompanyExpenseCategory");
+    const quickCompanyExpenseUtilitySubcategoryEl = document.getElementById("quickCompanyExpenseUtilitySubcategory");
+    const quickCompanyExpenseDescriptionEl = document.getElementById("quickCompanyExpenseDescription");
+    const quickCompanyExpenseAmountEl = document.getElementById("quickCompanyExpenseAmount");
     listActive.innerHTML = "";
     listArchived.innerHTML = "";
     companyExpensesList.innerHTML = "";
@@ -318,12 +469,43 @@ export function renderProjectsPage() {
         if (editCompanyExpensePopup) editCompanyExpensePopup.style.display = "none";
     }
 
+    if (quickCompanyExpenseDateEl && !quickCompanyExpenseDateEl.value) {
+        quickCompanyExpenseDateEl.value = new Date().toISOString().slice(0, 10);
+    }
+
     const allProjects = data.projects
         .filter(project => !project.system)
         .sort((a, b) => String(b.takeoverDate || "").localeCompare(String(a.takeoverDate || "")));
 
-    const activeProjects = allProjects.filter(p => !p.archived);
-    const archivedProjects = allProjects.filter(p => p.archived);
+    const activeProjects = allProjects.filter(project => {
+        const matchesStatus = projectsStatusValue === "all" || projectsStatusValue === "active";
+        const matchesSearch = !projectsSearchValue || [
+            project.name,
+            project.takeoverDate,
+            project.totalPrice,
+            project.advance
+        ].join(" ").toLowerCase().includes(projectsSearchValue.toLowerCase());
+        return !project.archived && matchesStatus && matchesSearch;
+    });
+
+    const archivedProjects = allProjects.filter(project => {
+        const matchesStatus = projectsStatusValue === "all" || projectsStatusValue === "archived";
+        const matchesSearch = !projectsSearchValue || [
+            project.name,
+            project.takeoverDate,
+            project.totalPrice,
+            project.advance
+        ].join(" ").toLowerCase().includes(projectsSearchValue.toLowerCase());
+        return project.archived && matchesStatus && matchesSearch;
+    });
+
+    const matchesCompanyExpenseSearch = (expense) => {
+        if (!companyExpenseSearchValue) return true;
+        return [expense.date, expense.cat, expense.desc, expense.amount]
+            .join(" ")
+            .toLowerCase()
+            .includes(companyExpenseSearchValue.toLowerCase());
+    };
 
     // Funkcija za renderiranje redova projekta
     function renderProjectRow(project, listContainer) {
@@ -422,8 +604,12 @@ export function renderProjectsPage() {
     });
 
     const currentMonthKey = getCurrentMonthKey();
-    const currentMonthCompanyExpenses = getCompanyExpenses().filter(expense => String(expense.date || "").slice(0, 7) === currentMonthKey);
-    const archivedCompanyExpenses = getCompanyExpenses().filter(expense => String(expense.date || "").slice(0, 7) !== currentMonthKey);
+    const companyExpenses = getCompanyExpenses().filter(matchesCompanyExpenseSearch);
+    const currentMonthCompanyExpenses = companyExpenses.filter(expense => String(expense.date || "").slice(0, 7) === currentMonthKey);
+    const archivedCompanyExpenses = companyExpenses.filter(expense => String(expense.date || "").slice(0, 7) !== currentMonthKey);
+    const showCurrentCompanyExpenses = companyExpenseScopeValue !== "archive";
+    const showArchivedCompanyExpenses = companyExpenseScopeValue !== "current";
+    const currentMonthLabel = currentMonthKey.slice(5, 7) + "." + currentMonthKey.slice(0, 4);
 
     function renderCompanyExpenseRow(expense, listContainer) {
         const tr = document.createElement("tr");
@@ -474,13 +660,25 @@ export function renderProjectsPage() {
         listContainer.appendChild(tr);
     }
 
-    currentMonthCompanyExpenses.forEach(expense => {
-        renderCompanyExpenseRow(expense, companyExpensesList);
-    });
+    if (!showCurrentCompanyExpenses) {
+        companyExpensesList.innerHTML = `<tr><td colspan="5" class="table-empty">Tekući mjesec je sakriven filterom.</td></tr>`;
+    } else if (currentMonthCompanyExpenses.length === 0) {
+        companyExpensesList.innerHTML = `<tr><td colspan="5" class="table-empty">Nema troškova firme za ${currentMonthLabel}.</td></tr>`;
+    } else {
+        currentMonthCompanyExpenses.forEach(expense => {
+            renderCompanyExpenseRow(expense, companyExpensesList);
+        });
+    }
 
-    archivedCompanyExpenses.forEach(expense => {
-        renderCompanyExpenseRow(expense, companyExpensesArchiveList);
-    });
+    if (!showArchivedCompanyExpenses) {
+        companyExpensesArchiveList.innerHTML = `<tr><td colspan="5" class="table-empty">Arhiva je sakrivena filterom.</td></tr>`;
+    } else if (archivedCompanyExpenses.length === 0) {
+        companyExpensesArchiveList.innerHTML = `<tr><td colspan="5" class="table-empty">Nema arhiviranih troškova firme.</td></tr>`;
+    } else {
+        archivedCompanyExpenses.forEach(expense => {
+            renderCompanyExpenseRow(expense, companyExpensesArchiveList);
+        });
+    }
 
     // Toggle za arhivirane projekte
     const toggleBtn = document.getElementById("toggleArchivedProjects");
@@ -537,6 +735,14 @@ export function renderProjectsPage() {
     document.getElementById("editCompanyExpenseUtilitySubcategory").addEventListener("change", syncCompanyExpenseDescription);
     syncCompanyExpenseUtilitySubcategory();
     syncCompanyExpenseDescription();
+
+    document.getElementById("quickCompanyExpenseCategory")?.addEventListener("change", () => {
+        syncQuickCompanyExpenseUtilitySubcategory();
+        syncQuickCompanyExpenseDescription();
+    });
+    document.getElementById("quickCompanyExpenseUtilitySubcategory")?.addEventListener("change", syncQuickCompanyExpenseDescription);
+    syncQuickCompanyExpenseUtilitySubcategory();
+    syncQuickCompanyExpenseDescription();
 
     document.getElementById("saveProjectChangesBtn").addEventListener("click", () => {
         const id = document.getElementById("editProjectId").value;
@@ -647,4 +853,90 @@ export function renderProjectsPage() {
         renderProjectsPage();
         window.dispatchEvent(new CustomEvent("a3z:dataImported"));
     });
+
+    document.getElementById("saveQuickCompanyExpenseBtn")?.addEventListener("click", () => {
+        const dateEl = quickCompanyExpenseDateEl;
+        const categoryEl = quickCompanyExpenseCategoryEl;
+        const utilityEl = quickCompanyExpenseUtilitySubcategoryEl;
+        const descriptionEl = quickCompanyExpenseDescriptionEl;
+        const amountEl = quickCompanyExpenseAmountEl;
+
+        [dateEl, categoryEl, utilityEl, descriptionEl, amountEl].forEach(el => el?.classList.remove("invalid"));
+
+        const date = dateEl?.value || "";
+        const category = getQuickSelectedCompanyExpenseCategory();
+        const amount = normalizeMoney(amountEl?.value || 0);
+        const description = isAutoDescriptionCategory(category)
+            ? category
+            : descriptionEl.value.trim();
+
+        let isValid = true;
+        if (!date) {
+            dateEl?.classList.add("invalid");
+            isValid = false;
+        }
+        if (!categoryEl?.value) {
+            categoryEl?.classList.add("invalid");
+            isValid = false;
+        }
+        if (categoryEl?.value === UTILITIES_CATEGORY && !utilityEl?.value) {
+            utilityEl?.classList.add("invalid");
+            isValid = false;
+        }
+        if (!description) {
+            descriptionEl?.classList.add("invalid");
+            isValid = false;
+        }
+        if (!Number.isFinite(amount) || amount <= 0) {
+            amountEl?.classList.add("invalid");
+            isValid = false;
+        }
+
+        if (!isValid) {
+            alert("Unesite ispravne podatke za brzi unos troška firme.");
+            return;
+        }
+
+        data.transactions.push({
+            id: createId(),
+            projectId: OVERHEAD_PROJECT_ID,
+            date,
+            type: "Trosak",
+            desc: description,
+            amount,
+            cat: category,
+            who: "Firma",
+            deleted: false
+        });
+
+        saveToLocal();
+        renderProjectsPage();
+        window.dispatchEvent(new CustomEvent("a3z:dataImported"));
+    });
+
+    document.getElementById("resetQuickCompanyExpenseBtn")?.addEventListener("click", () => {
+        if (quickCompanyExpenseDateEl) quickCompanyExpenseDateEl.value = new Date().toISOString().slice(0, 10);
+        if (quickCompanyExpenseCategoryEl) quickCompanyExpenseCategoryEl.value = "Materijal";
+        if (quickCompanyExpenseUtilitySubcategoryEl) quickCompanyExpenseUtilitySubcategoryEl.value = "Struja";
+        if (quickCompanyExpenseDescriptionEl) quickCompanyExpenseDescriptionEl.value = "";
+        if (quickCompanyExpenseAmountEl) quickCompanyExpenseAmountEl.value = "";
+        syncQuickCompanyExpenseUtilitySubcategory();
+        syncQuickCompanyExpenseDescription();
+        quickCompanyExpenseDateEl?.focus();
+    });
+
+    document.getElementById("projectsSearchInput")?.addEventListener("input", () => renderProjectsPage());
+    document.getElementById("projectsStatusFilter")?.addEventListener("change", () => renderProjectsPage());
+    document.getElementById("companyExpenseSearchInput")?.addEventListener("input", () => renderProjectsPage());
+    document.getElementById("companyExpenseScopeFilter")?.addEventListener("change", () => renderProjectsPage());
+
+    if (focusedFilterId) {
+        const nextFocused = document.getElementById(focusedFilterId);
+        if (nextFocused) {
+            nextFocused.focus();
+            if (typeof nextFocused.setSelectionRange === "function" && focusedSelectionStart !== null && focusedSelectionEnd !== null) {
+                nextFocused.setSelectionRange(focusedSelectionStart, focusedSelectionEnd);
+            }
+        }
+    }
 }

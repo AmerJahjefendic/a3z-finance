@@ -55,15 +55,12 @@ export function toggleInputs() {
 
     const catBlock = document.getElementById("catBlock");
     const utilitySubcategoryBlock = document.getElementById("utilitySubcategoryBlock");
-    const overheadBlock = document.getElementById("overheadBlock");
 
     if (type === "Prihod") {
-        catBlock.style.display = "none";
+        if (catBlock) catBlock.style.display = "none";
         if (utilitySubcategoryBlock) utilitySubcategoryBlock.style.display = "none";
-        overheadBlock.style.display = "none";
     } else {
-        catBlock.style.display = "block";
-        overheadBlock.style.display = "block";
+        if (catBlock) catBlock.style.display = "block";
     }
 
     syncUtilitySubcategory();
@@ -74,13 +71,14 @@ export function toggleInputs() {
 // ============ RENDER FORM ============
 export function renderTransactionForm() {
     const root = document.getElementById("transactionForm");
+    const today = new Date().toISOString().slice(0, 10);
 
     root.innerHTML = `
         <div class="card">
             <h2>Dodaj transakciju</h2>
 
             <label>Datum</label>
-            <input type="date" id="dateInput">
+            <input type="date" id="dateInput" value="${today}">
 
             <label>Tip</label>
             <select id="typeInput">
@@ -106,13 +104,6 @@ export function renderTransactionForm() {
                     <option value="Struja">Struja</option>
                     <option value="Voda">Voda</option>
                 </select>
-            </div>
-
-            <div id="overheadBlock">
-                <label style="display:flex; align-items:center; gap:8px; margin:8px 0;">
-                    <input type="checkbox" id="isOverheadInput" style="width:auto; margin:0;">
-                    Opšti trošak firme (nije vezan za projekat)
-                </label>
             </div>
 
             <label>Opis</label>
@@ -199,6 +190,7 @@ export function renderTransactionList() {
                 editTransaction(btn.dataset.id);
                 const transactionPopup = document.getElementById("transactionFormPopup");
                 if (transactionPopup) transactionPopup.style.display = "flex";
+                window.a3zSetTransactionPopupTab?.("transaction");
                 renderTransactionList();
                 recalc();
             }
