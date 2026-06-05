@@ -558,7 +558,7 @@ export function renderHome() {
             <p>Datum preuzimanja: <b><span id="projectTakeoverDate">-</span></b></p>
             <p>Ukupna cijena: <b><span id="projectTotalPrice">0</span> KM</b></p>
             <p>Predujam: <b><span id="projectAdvance">0</span> KM</b></p>
-            <p>Naplaceno kroz prihode: <b><span id="projectCollected">0</span> KM</b></p>
+            <p>Zarada po projektu: <b><span id="projectProfitAmount">0</span> KM</b></p>
             <p>Troškovi projekta: <b><span id="projectExpenseAmount">0</span> KM</b></p>
             <p>Preostalo za naplatu: <b><span id="projectRemaining">0</span> KM</b></p>
         </div>

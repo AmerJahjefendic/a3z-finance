@@ -43,6 +43,7 @@ export function recalc() {
     const monthlyNetProfit = monthlyIncome - monthlyProjectExpense - monthlyOverheadExpense;
     const totalPrice = Number(activeProject?.totalPrice || 0);
     const advance = Number(activeProject?.advance || 0);
+    const projectProfit = projectIncome - projectExpense;
     const remaining = totalPrice - projectIncome;
     
     // ===============================================
@@ -74,8 +75,8 @@ export function recalc() {
     const projectAdvanceEl = document.getElementById("projectAdvance");
     if (projectAdvanceEl) projectAdvanceEl.innerText = advance.toFixed(2);
 
-    const projectCollectedEl = document.getElementById("projectCollected");
-    if (projectCollectedEl) projectCollectedEl.innerText = projectIncome.toFixed(2);
+    const projectProfitAmountEl = document.getElementById("projectProfitAmount");
+    if (projectProfitAmountEl) projectProfitAmountEl.innerText = projectProfit.toFixed(2);
 
     const projectRemainingEl = document.getElementById("projectRemaining");
     if (projectRemainingEl) projectRemainingEl.innerText = remaining.toFixed(2);
