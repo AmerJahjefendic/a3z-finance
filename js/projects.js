@@ -1,6 +1,7 @@
 import { activateTab, data, OVERHEAD_PROJECT_ID, setActiveProject } from "./main.js";
 import { saveToLocal } from "./storage.js";
 import { createId, normalizeMoney } from "./utils.js";
+import { preventWheelValueChange, syncExpenseInputGroup } from "./formHelpers.js";
 import {
     getSelectedExpenseCategory,
     isAutoDescriptionCategory,
@@ -15,13 +16,6 @@ function formatDate(dateStr) {
     return `${day}.${month}.${year}.`;
 }
 
-function preventWheelValueChange(inputEl) {
-    if (!inputEl) return;
-    inputEl.addEventListener("wheel", (e) => {
-        e.preventDefault();
-    }, { passive: false });
-}
-
 function getCompanyExpenses() {
     return data.transactions
         .filter(t => !t.deleted && t.projectId === OVERHEAD_PROJECT_ID && t.type === "Trosak")
@@ -32,88 +26,6 @@ function getCurrentMonthKey() {
     const now = new Date();
     const month = String(now.getMonth() + 1).padStart(2, "0");
     return `${now.getFullYear()}-${month}`;
-}
-
-function getSelectedCompanyExpenseCategory() {
-    const catInput = document.getElementById("editCompanyExpenseCategory");
-    const utilitySubcategoryInput = document.getElementById("editCompanyExpenseUtilitySubcategory");
-    return getSelectedExpenseCategory(catInput?.value, utilitySubcategoryInput?.value);
-}
-
-function syncCompanyExpenseUtilitySubcategory() {
-    const catInput = document.getElementById("editCompanyExpenseCategory");
-    const utilitySubcategoryBlock = document.getElementById("editCompanyExpenseUtilityBlock");
-    const utilitySubcategoryInput = document.getElementById("editCompanyExpenseUtilitySubcategory");
-
-    if (!catInput || !utilitySubcategoryBlock || !utilitySubcategoryInput) return;
-
-    const shouldShow = catInput.value === UTILITIES_CATEGORY;
-    utilitySubcategoryBlock.style.display = shouldShow ? "block" : "none";
-
-    if (shouldShow && !utilitySubcategoryInput.value) {
-        utilitySubcategoryInput.value = "Struja";
-    }
-}
-
-function syncCompanyExpenseDescription() {
-    const descInput = document.getElementById("editCompanyExpenseDescription");
-    if (!descInput) return;
-
-    const selectedCategory = getSelectedCompanyExpenseCategory();
-    if (isAutoDescriptionCategory(selectedCategory)) {
-        descInput.value = selectedCategory;
-        descInput.disabled = true;
-        descInput.placeholder = "Opis se unosi automatski";
-        return;
-    }
-
-    if (descInput.disabled) {
-        descInput.value = "";
-    }
-
-    descInput.disabled = false;
-    descInput.placeholder = "";
-}
-
-function getQuickSelectedCompanyExpenseCategory() {
-    const catInput = document.getElementById("quickCompanyExpenseCategory");
-    const utilitySubcategoryInput = document.getElementById("quickCompanyExpenseUtilitySubcategory");
-    return getSelectedExpenseCategory(catInput?.value, utilitySubcategoryInput?.value);
-}
-
-function syncQuickCompanyExpenseUtilitySubcategory() {
-    const catInput = document.getElementById("quickCompanyExpenseCategory");
-    const utilitySubcategoryBlock = document.getElementById("quickCompanyExpenseUtilityBlock");
-    const utilitySubcategoryInput = document.getElementById("quickCompanyExpenseUtilitySubcategory");
-
-    if (!catInput || !utilitySubcategoryBlock || !utilitySubcategoryInput) return;
-
-    const shouldShow = catInput.value === UTILITIES_CATEGORY;
-    utilitySubcategoryBlock.style.display = shouldShow ? "block" : "none";
-
-    if (shouldShow && !utilitySubcategoryInput.value) {
-        utilitySubcategoryInput.value = "Struja";
-    }
-}
-
-function syncQuickCompanyExpenseDescription() {
-    const descInput = document.getElementById("quickCompanyExpenseDescription");
-    if (!descInput) return;
-
-    const selectedCategory = getQuickSelectedCompanyExpenseCategory();
-    if (isAutoDescriptionCategory(selectedCategory)) {
-        descInput.value = selectedCategory;
-        descInput.disabled = true;
-        descInput.placeholder = "Opis se unosi automatski";
-        return;
-    }
-
-    if (descInput.disabled) {
-        descInput.value = "";
-    }
-
-    descInput.disabled = false;
-    descInput.placeholder = "";
 }
 
 function getProjectStats(projectId) {
@@ -639,8 +551,12 @@ export function renderProjectsPage() {
             document.getElementById("editCompanyExpenseUtilitySubcategory").value = parsedCategory.sub;
             document.getElementById("editCompanyExpenseDescription").value = expense.desc || "";
             document.getElementById("editCompanyExpenseAmount").value = Number(expense.amount || 0);
-            syncCompanyExpenseUtilitySubcategory();
-            syncCompanyExpenseDescription();
+            syncExpenseInputGroup({
+                categoryInputId: "editCompanyExpenseCategory",
+                utilityBlockId: "editCompanyExpenseUtilityBlock",
+                utilityInputId: "editCompanyExpenseUtilitySubcategory",
+                descriptionInputId: "editCompanyExpenseDescription"
+            });
             openEditCompanyExpensePopup();
         });
 
@@ -729,20 +645,50 @@ export function renderProjectsPage() {
     });
 
     document.getElementById("editCompanyExpenseCategory").addEventListener("change", () => {
-        syncCompanyExpenseUtilitySubcategory();
-        syncCompanyExpenseDescription();
+        syncExpenseInputGroup({
+            categoryInputId: "editCompanyExpenseCategory",
+            utilityBlockId: "editCompanyExpenseUtilityBlock",
+            utilityInputId: "editCompanyExpenseUtilitySubcategory",
+            descriptionInputId: "editCompanyExpenseDescription"
+        });
     });
-    document.getElementById("editCompanyExpenseUtilitySubcategory").addEventListener("change", syncCompanyExpenseDescription);
-    syncCompanyExpenseUtilitySubcategory();
-    syncCompanyExpenseDescription();
+    document.getElementById("editCompanyExpenseUtilitySubcategory").addEventListener("change", () => {
+        syncExpenseInputGroup({
+            categoryInputId: "editCompanyExpenseCategory",
+            utilityBlockId: "editCompanyExpenseUtilityBlock",
+            utilityInputId: "editCompanyExpenseUtilitySubcategory",
+            descriptionInputId: "editCompanyExpenseDescription"
+        });
+    });
+    syncExpenseInputGroup({
+        categoryInputId: "editCompanyExpenseCategory",
+        utilityBlockId: "editCompanyExpenseUtilityBlock",
+        utilityInputId: "editCompanyExpenseUtilitySubcategory",
+        descriptionInputId: "editCompanyExpenseDescription"
+    });
 
     document.getElementById("quickCompanyExpenseCategory")?.addEventListener("change", () => {
-        syncQuickCompanyExpenseUtilitySubcategory();
-        syncQuickCompanyExpenseDescription();
+        syncExpenseInputGroup({
+            categoryInputId: "quickCompanyExpenseCategory",
+            utilityBlockId: "quickCompanyExpenseUtilityBlock",
+            utilityInputId: "quickCompanyExpenseUtilitySubcategory",
+            descriptionInputId: "quickCompanyExpenseDescription"
+        });
     });
-    document.getElementById("quickCompanyExpenseUtilitySubcategory")?.addEventListener("change", syncQuickCompanyExpenseDescription);
-    syncQuickCompanyExpenseUtilitySubcategory();
-    syncQuickCompanyExpenseDescription();
+    document.getElementById("quickCompanyExpenseUtilitySubcategory")?.addEventListener("change", () => {
+        syncExpenseInputGroup({
+            categoryInputId: "quickCompanyExpenseCategory",
+            utilityBlockId: "quickCompanyExpenseUtilityBlock",
+            utilityInputId: "quickCompanyExpenseUtilitySubcategory",
+            descriptionInputId: "quickCompanyExpenseDescription"
+        });
+    });
+    syncExpenseInputGroup({
+        categoryInputId: "quickCompanyExpenseCategory",
+        utilityBlockId: "quickCompanyExpenseUtilityBlock",
+        utilityInputId: "quickCompanyExpenseUtilitySubcategory",
+        descriptionInputId: "quickCompanyExpenseDescription"
+    });
 
     document.getElementById("saveProjectChangesBtn").addEventListener("click", () => {
         const id = document.getElementById("editProjectId").value;
@@ -810,7 +756,7 @@ export function renderProjectsPage() {
         }
 
         const date = dateEl.value;
-        const category = getSelectedCompanyExpenseCategory();
+        const category = getSelectedExpenseCategory(categoryEl.value, utilityEl.value);
         const amount = normalizeMoney(amountEl.value || 0);
         const description = isAutoDescriptionCategory(category)
             ? category
@@ -864,7 +810,7 @@ export function renderProjectsPage() {
         [dateEl, categoryEl, utilityEl, descriptionEl, amountEl].forEach(el => el?.classList.remove("invalid"));
 
         const date = dateEl?.value || "";
-        const category = getQuickSelectedCompanyExpenseCategory();
+        const category = getSelectedExpenseCategory(categoryEl?.value, utilityEl?.value);
         const amount = normalizeMoney(amountEl?.value || 0);
         const description = isAutoDescriptionCategory(category)
             ? category
@@ -920,8 +866,12 @@ export function renderProjectsPage() {
         if (quickCompanyExpenseUtilitySubcategoryEl) quickCompanyExpenseUtilitySubcategoryEl.value = "Struja";
         if (quickCompanyExpenseDescriptionEl) quickCompanyExpenseDescriptionEl.value = "";
         if (quickCompanyExpenseAmountEl) quickCompanyExpenseAmountEl.value = "";
-        syncQuickCompanyExpenseUtilitySubcategory();
-        syncQuickCompanyExpenseDescription();
+        syncExpenseInputGroup({
+            categoryInputId: "quickCompanyExpenseCategory",
+            utilityBlockId: "quickCompanyExpenseUtilityBlock",
+            utilityInputId: "quickCompanyExpenseUtilitySubcategory",
+            descriptionInputId: "quickCompanyExpenseDescription"
+        });
         quickCompanyExpenseDateEl?.focus();
     });
 

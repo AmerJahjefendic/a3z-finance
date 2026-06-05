@@ -3,60 +3,15 @@ import { renderTransactionForm, renderTransactionList } from "./ui.js";
 import { addProject, data, getActiveProject, setActiveProject } from "./main.js";
 import { saveToLocal } from "./storage.js";
 import { createId, normalizeMoney } from "./utils.js";
+import { preventWheelValueChange, syncExpenseInputGroup } from "./formHelpers.js";
 import {
     getSelectedExpenseCategory,
     isAutoDescriptionCategory,
-    parseExpenseCategory,
     UTILITIES_CATEGORY
 } from "./expenseCategories.js";
 
-function preventWheelValueChange(inputEl) {
-    if (!inputEl) return;
-    inputEl.addEventListener("wheel", (e) => {
-        e.preventDefault();
-    }, { passive: false });
-}
-
 function todayValue() {
     return new Date().toISOString().slice(0, 10);
-}
-
-function syncHomeCompanyExpenseUtilitySubcategory() {
-    const catInput = document.getElementById("homeCompanyExpenseCategory");
-    const utilitySubcategoryBlock = document.getElementById("homeCompanyExpenseUtilityBlock");
-    const utilitySubcategoryInput = document.getElementById("homeCompanyExpenseUtilitySubcategory");
-
-    if (!catInput || !utilitySubcategoryBlock || !utilitySubcategoryInput) return;
-
-    const shouldShow = catInput.value === UTILITIES_CATEGORY;
-    utilitySubcategoryBlock.style.display = shouldShow ? "block" : "none";
-
-    if (shouldShow && !utilitySubcategoryInput.value) {
-        utilitySubcategoryInput.value = "Struja";
-    }
-}
-
-function syncHomeCompanyExpenseDescription() {
-    const descInput = document.getElementById("homeCompanyExpenseDescription");
-    if (!descInput) return;
-
-    const catInput = document.getElementById("homeCompanyExpenseCategory");
-    const utilitySubcategoryInput = document.getElementById("homeCompanyExpenseUtilitySubcategory");
-    const selectedCategory = getSelectedExpenseCategory(catInput?.value, utilitySubcategoryInput?.value);
-
-    if (isAutoDescriptionCategory(selectedCategory)) {
-        descInput.value = selectedCategory;
-        descInput.disabled = true;
-        descInput.placeholder = "Opis se unosi automatski";
-        return;
-    }
-
-    if (descInput.disabled) {
-        descInput.value = "";
-    }
-
-    descInput.disabled = false;
-    descInput.placeholder = "";
 }
 
 function resetHomeCompanyExpenseForm() {
@@ -72,8 +27,12 @@ function resetHomeCompanyExpenseForm() {
     if (descriptionEl) descriptionEl.value = "";
     if (amountEl) amountEl.value = "";
 
-    syncHomeCompanyExpenseUtilitySubcategory();
-    syncHomeCompanyExpenseDescription();
+    syncExpenseInputGroup({
+        categoryInputId: "homeCompanyExpenseCategory",
+        utilityBlockId: "homeCompanyExpenseUtilityBlock",
+        utilityInputId: "homeCompanyExpenseUtilitySubcategory",
+        descriptionInputId: "homeCompanyExpenseDescription"
+    });
 }
 
 function saveHomeCompanyExpense() {
@@ -764,10 +723,21 @@ export function renderHome() {
     transactionPopupTabCompany?.addEventListener("click", () => setTransactionPopupTab("company"));
 
     document.getElementById("homeCompanyExpenseCategory")?.addEventListener("change", () => {
-        syncHomeCompanyExpenseUtilitySubcategory();
-        syncHomeCompanyExpenseDescription();
+        syncExpenseInputGroup({
+            categoryInputId: "homeCompanyExpenseCategory",
+            utilityBlockId: "homeCompanyExpenseUtilityBlock",
+            utilityInputId: "homeCompanyExpenseUtilitySubcategory",
+            descriptionInputId: "homeCompanyExpenseDescription"
+        });
     });
-    document.getElementById("homeCompanyExpenseUtilitySubcategory")?.addEventListener("change", syncHomeCompanyExpenseDescription);
+    document.getElementById("homeCompanyExpenseUtilitySubcategory")?.addEventListener("change", () => {
+        syncExpenseInputGroup({
+            categoryInputId: "homeCompanyExpenseCategory",
+            utilityBlockId: "homeCompanyExpenseUtilityBlock",
+            utilityInputId: "homeCompanyExpenseUtilitySubcategory",
+            descriptionInputId: "homeCompanyExpenseDescription"
+        });
+    });
     document.getElementById("saveHomeCompanyExpenseBtn")?.addEventListener("click", saveHomeCompanyExpense);
     document.getElementById("resetHomeCompanyExpenseBtn")?.addEventListener("click", resetHomeCompanyExpenseForm);
 
