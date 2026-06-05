@@ -616,6 +616,76 @@ input.invalid, select.invalid {
     min-width: 160px;
 }
 
+.calendar-filter-shell {
+    border: 1px solid #dbe5f6;
+    border-radius: 10px;
+    background: linear-gradient(180deg, #f7faff 0%, #ffffff 100%);
+    padding: 6px;
+    margin: 8px 0;
+}
+
+.calendar-year-row {
+    display: grid;
+    grid-template-columns: 32px 1fr 32px;
+    gap: 4px;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.calendar-nav-btn,
+.calendar-year-btn,
+.calendar-month-btn {
+    margin-top: 0;
+}
+
+.calendar-nav-btn {
+    min-width: 0;
+    width: 32px;
+    height: 30px;
+    padding: 0;
+    font-size: 18px;
+    line-height: 1;
+}
+
+.calendar-year-btn {
+    width: 100%;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    background: #eef3ff;
+    color: var(--primary-dark);
+    border: 1px solid #cbd7ff;
+    padding: 6px 8px;
+    font-size: 13px;
+}
+
+.calendar-year-btn.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+
+.calendar-month-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 4px;
+}
+
+.calendar-month-btn {
+    min-width: 0;
+    width: 100%;
+    background: #eef3ff;
+    color: var(--primary-dark);
+    border: 1px solid #cbd7ff;
+    font-size: 11px;
+    padding: 6px 4px;
+}
+
+.calendar-month-btn.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+
 /* ======================================
     MOBILE OPTIMIZATION (Card-Based List)
 ====================================== */
@@ -687,6 +757,19 @@ input.invalid, select.invalid {
 
     .quick-expense-actions button {
         width: 100%;
+    }
+
+    .calendar-month-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .calendar-filter-shell {
+        padding: 5px;
+    }
+
+    .calendar-year-btn,
+    .calendar-month-btn {
+        font-size: 11px;
     }
 
     .filter-bar {
